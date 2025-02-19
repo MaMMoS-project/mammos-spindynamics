@@ -1,0 +1,2 @@
+# spindynamics
+Spin dynamics package.
