@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mammos-spindynamics"
+version = "0.0.1"
+description = "Spin dynamics package."
+readme = "README.md"
+authors = [
+    {name = "Andrea Petrocchi", email = "andrea.petrocchi@mpsd.mpg.de"},
+    {name = "Swapneel Amit Pathak", email = "swapneel-amit.pathak@mpsd.mpg.de"}
+]
+license-files = ["LICENSE"]
+
+requires-python = ">=3.8"
+
+[project.urls]
+Repository = "https://github.com/MaMMoS-project/mammos-spindynamics"
+
