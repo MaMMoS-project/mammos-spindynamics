@@ -3,6 +3,7 @@
 import inspect
 from pathlib import Path
 import polars as pl
+from rich import print
 from scipy.interpolate import interp1d
 
 DIR = Path(__file__).parent
