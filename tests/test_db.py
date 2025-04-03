@@ -32,4 +32,4 @@ def test_CrNiP_12345():
     in the database, so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_M(formula="NdFe14B", structure=12345)
+        get_M(formula="NdFe14B", structure="12345")

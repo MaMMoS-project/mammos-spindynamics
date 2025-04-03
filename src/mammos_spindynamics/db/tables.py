@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 DIR = Path(__file__).parent
 
 
-def get_M(formula="", OQMD_label="", structure="", spacegroup=""):
+def get_M(formula=None, OQMD_label=None, structure=None, spacegroup=None):
     """Get magnetization function from table.
 
     This function retrieves intrinsic properties at zero temperature
@@ -24,14 +24,14 @@ def get_M(formula="", OQMD_label="", structure="", spacegroup=""):
         DIR / "db.csv",
         schema_overrides={"structure": pl.String},
     )
-    if formula != "":
+    if formula is not None:
         df_filtered = df.filter(pl.col("formula") == formula)
-    if OQMD_label != "":
-        df_filtered = df.filter(pl.col("OQMD_label") == str(OQMD_label))
-    if structure != "":
-        df_filtered = df.filter(pl.col("structure") == str(structure))
-    if spacegroup != "":
-        df_filtered = df.filter(pl.col("spacegroup") == str(spacegroup))
+    if OQMD_label is not None:
+        df_filtered = df.filter(pl.col("OQMD_label") == OQMD_label)
+    if structure is not None:
+        df_filtered = df.filter(pl.col("structure") == structure)
+    if spacegroup is not None:
+        df_filtered = df.filter(pl.col("spacegroup") == spacegroup)
 
     df_filtered = df_filtered.collect()
     num_results = len(df_filtered)
