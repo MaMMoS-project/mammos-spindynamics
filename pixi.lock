@@ -664,8 +664,8 @@ packages:
   timestamp: 1727963148474
 - pypi: .
   name: mammos-spindynamics
-  version: 0.0.1
-  sha256: d041cf58f036266127705ff2e80074ad3e085fa6551777a9b3671bc9c994a285
+  version: 0.1.0
+  sha256: d689001eac9cc0e6b2e1cf96530286eec6e341a7bc674ccdce138c93b8d4c8a5
   requires_dist:
   - ipykernel
   - matplotlib>=3.10.1,<4
