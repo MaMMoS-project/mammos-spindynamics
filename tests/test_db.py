@@ -13,6 +13,7 @@ def test_CrNiP():
     """
     M = get_M(formula="CrNiP")
     assert M(400) == 0.002092
+    assert M(450) == 0.5 * (0.002092 + 0.002304)
 
 
 def test_NdFe14B():
