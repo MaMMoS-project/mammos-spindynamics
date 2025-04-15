@@ -16,7 +16,6 @@ license-files = ["LICENSE"]
 requires-python = ">=3.8"
 
 dependencies = [
-    "ipykernel",
     "pandas",
     "matplotlib >=3.10.1,<4",
     "rich",
@@ -33,6 +32,9 @@ format = [
 test = [
     "pytest==8.3",
 ]
+example = [
+    "jupyter"
+]
 
 # pixi
 [tool.pixi.project]
@@ -46,6 +48,7 @@ mammos-spindynamics = { path = ".", editable = true }
 default = { solve-group = "default" }
 format = { features = ["format"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
+example = { features = ["example"], solve-group = "default" }
 
 [tool.pixi.tasks]
 clean = "rm -r .ruff_cache .pytest_cache"
@@ -56,6 +59,9 @@ lint = "ruff check"
 
 [tool.pixi.feature.test.tasks]
 test = "pytest -v"
+
+[tool.pixi.feature.example.tasks]
+example = "jupyter notebook examples/magnetization.ipynb"
 
 # ruff
 [tool.ruff]
