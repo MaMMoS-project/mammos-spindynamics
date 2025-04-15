@@ -51,7 +51,7 @@ test = { features = ["test"], solve-group = "default" }
 example = { features = ["example"], solve-group = "default" }
 
 [tool.pixi.tasks]
-clean = "rm -r .ruff_cache .pytest_cache"
+clean = "rm -rf .ruff_cache .pytest_cache"
 
 [tool.pixi.feature.format.tasks]
 format = "ruff format"
