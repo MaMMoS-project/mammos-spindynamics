@@ -1,10 +1,10 @@
 """Functions for reading tables."""
 
-import inspect
 from pathlib import Path
 import polars as pl
 from rich import print
 from scipy.interpolate import interp1d
+from textwrap import dedent
 
 DIR = Path(__file__).parent
 
@@ -45,7 +45,7 @@ def get_M(formula=None, OQMD_label=None, structure=None, spacegroup=None):
     table = pl.read_csv(DIR / material["table"])
 
     print(
-        inspect.cleandoc(
+        dedent(
             f"""
             Loaded material.
             Chemical Formula: {material['formula']}
