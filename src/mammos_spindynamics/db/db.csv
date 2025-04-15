@@ -1,2 +1,3 @@
-formula,OQMD_label,structure,spacegroup,table
-CrNiP,icsd-600596,92390,P-62m,0001.csv
+formula,spacegroup,cell_length_a,cell_length_b,cell_length_c,cell_angle_alpha,cell_angle_beta,cell_angle_gamma,cell_volume,ICSD_label,OQMD_label,table
+CrNiP,P-62m,5.840,5.840,3.514,90,90,120,103.79,600596,icsd-600596,0001.csv
+Co2Fe2H4,,2.645345,2.645314,8.539476,90,90,120,51.751119,,,0002.csv
