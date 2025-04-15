@@ -17,8 +17,8 @@ requires-python = ">=3.8"
 
 dependencies = [
     "ipykernel",
+    "pandas",
     "matplotlib >=3.10.1,<4",
-    "polars ==1.22.0",
     "rich",
     "scipy",
 ]
