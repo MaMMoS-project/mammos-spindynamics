@@ -34,3 +34,13 @@ def test_CrNiP_12345():
     """
     with pytest.raises(LookupError):
         get_M(formula="CrNiP", spacegroup="P1")
+
+
+def test_all():
+    """Test search with no filters.
+
+    This will select all entries in the database,
+    so we expect a `LookupError`.
+    """
+    with pytest.raises(LookupError):
+        get_M()
