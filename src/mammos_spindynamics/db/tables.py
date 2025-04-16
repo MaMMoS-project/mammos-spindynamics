@@ -96,7 +96,7 @@ def get_M(
 
     material = df.iloc[0]
     table = pd.read_csv(DIR / "data" / material.table)
-    print(f"Loaded material.\n{describe_material}")
+    print(f"Loaded material.\n{describe_material(material)}")
     return interp1d(table["Temp"], table["Mavg"], kind=interpolation_kind)
 
 
