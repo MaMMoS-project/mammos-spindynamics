@@ -61,7 +61,7 @@ lint = "ruff check"
 test = "pytest -v"
 
 [tool.pixi.feature.example.tasks]
-example = "jupyter notebook examples/magnetization.ipynb"
+example = "jupyter-lab examples/magnetization.ipynb"
 
 # ruff
 [tool.ruff]
