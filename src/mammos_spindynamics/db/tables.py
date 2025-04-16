@@ -100,46 +100,12 @@ def get_M(
     return interp1d(table["Temp"], table["Mavg"], kind=interpolation_kind)
 
 
-def find_material(
-    formula=None,
-    spacegroup=None,
-    cell_length_a=None,
-    cell_length_b=None,
-    cell_length_c=None,
-    cell_angle_alpha=None,
-    cell_angle_beta=None,
-    cell_angle_gamma=None,
-    cell_volume=None,
-    ICSD_label=None,
-    OQMD_label=None,
-):
+def find_material(**kwargs):
     """Find materials in database.
 
     This function retrieves one or known materials from the database
-    `db.csv` by filtering for different parameters.
+    `db.csv` by filtering for any requirements given in **kwargs.
 
-    :param formula: Chemical formula
-    :type formula: str
-    :param spacegroup: Space group
-    :type spacegroup: str
-    :param cell_length_a: Cell length x
-    :type cell_length_a: float
-    :param cell_length_b: Cell length y
-    :type cell_length_b: float
-    :param cell_length_c: Cell length z
-    :type cell_length_c: float
-    :param cell_angle_alpha: Cell angle alpha
-    :type cell_angle_alpha: float
-    :param cell_angle_beta: Cell angle beta
-    :type cell_angle_beta: float
-    :param cell_angle_gamma: Cell angle gamma
-    :type cell_angle_gamma: float
-    :param cell_volume: Cell volume
-    :type cell_volume: float
-    :param ICSD_label: Label in the NIST Inorganic Crystal Structure Database.
-    :type ICSD_label: str
-    :param OQMD_label: Label in the the Open Quantum Materials Database.
-    :type OQMD_label: str
     :returns: Dataframe containing materials with requested qualities.
         Possibly empty.
     :rtype: pandas.DataFrame
@@ -160,28 +126,9 @@ def find_material(
             "OQMD_label": str,
         },
     )
-    if formula is not None:
-        df = df[df["formula"] == formula]
-    if spacegroup is not None:
-        df = df[df["spacegroup"] == spacegroup]
-    if cell_length_a is not None:
-        df = df[df["cell_length_a"] == cell_length_a]
-    if cell_length_b is not None:
-        df = df[df["cell_length_b"] == cell_length_b]
-    if cell_length_c is not None:
-        df = df[df["cell_length_c"] == cell_length_c]
-    if cell_angle_alpha is not None:
-        df = df[df["cell_angle_alpha"] == cell_angle_alpha]
-    if cell_angle_beta is not None:
-        df = df[df["cell_angle_beta"] == cell_angle_beta]
-    if cell_angle_gamma is not None:
-        df = df[df["cell_angle_gamma"] == cell_angle_gamma]
-    if cell_volume is not None:
-        df = df[df["cell_volume"] == cell_volume]
-    if ICSD_label is not None:
-        df = df[df["ICSD_label"] == ICSD_label]
-    if OQMD_label is not None:
-        df = df[df["OQMD_label"] == OQMD_label]
+    for key, value in kwargs.items():
+        if value is not None:
+            df = df[df[key] == value]
     return df
 
 
