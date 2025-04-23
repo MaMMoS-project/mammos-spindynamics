@@ -1,8 +1,11 @@
 """Test db lookup."""
 
+import pathlib
 import pytest
 
 from mammos_spindynamics.db import get_M
+
+DATA = pathlib.Path(__file__).parent.resolve() / "data"
 
 
 def test_CrNiP():
@@ -33,7 +36,7 @@ def test_CrNiP_12345():
     in the database, so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_M(formula="CrNiP", spacegroup="P1")
+        get_M(formula="Co2Fe2H4", space_group_name="P1")
 
 
 def test_all():
@@ -44,3 +47,43 @@ def test_all():
     """
     with pytest.raises(LookupError):
         get_M()
+
+
+def test_uppasd_known():
+    """Test query with UppASD input files.
+
+    We expect this test to pass and retrieve a known material.
+    """
+    M = get_M(
+        jfile=DATA / "known_material" / "jfile",
+        momfile=DATA / "known_material" / "momfile",
+        posfile=DATA / "known_material" / "posfile",
+    )
+    assert M(400) == 1.38120701
+    assert M(450) == 0.5 * (1.3495301 + 1.33638686)
+
+
+def test_uppasd_unknown():
+    """Test query with UppASD input files.
+
+    We expect this test to fail with a `LookupError`.
+    """
+    with pytest.raises(LookupError):
+        get_M(
+            jfile=DATA / "unknown_material" / "jfile",
+            momfile=DATA / "unknown_material" / "momfile",
+            posfile=DATA / "unknown_material" / "posfile",
+        )
+
+
+def test_uppasd_incorrect():
+    """Test query with UppASD input files.
+
+    We expect this test to fail with a `SyntaxError`.
+    """
+    with pytest.raises(SyntaxError):
+        get_M(
+            jfile=DATA / "wrong_data" / "jfile",
+            momfile=DATA / "wrong_data" / "momfile",
+            posfile=DATA / "wrong_data" / "posfile",
+        )
