@@ -1,5 +1,5 @@
 """Database-related functions."""
 
-from .tables import find_material, get_M
+from .tables import find_materials, get_M
 
-__all__ = ["find_material", "get_M"]
+__all__ = ["find_materials", "get_M"]
