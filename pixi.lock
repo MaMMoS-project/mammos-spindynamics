@@ -1353,7 +1353,7 @@ packages:
 - pypi: .
   name: mammos-spindynamics
   version: 0.1.0
-  sha256: 6a65e582d95c18a9d09ff26965a2347f996b7f35d50d774c9c6c77e270a28810
+  sha256: 043650a29abeb8b484a911e74e989368902a474fa25cc2437c80b3a59d3c60f7
   requires_dist:
   - pandas
   - matplotlib>=3.10.1,<4
