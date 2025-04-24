@@ -29,10 +29,10 @@ def test_NdFe14B():
         get_M(formula="NdFe14B")
 
 
-def test_CrNiP_12345():
-    """Test material `CrNiP` with structure `12345`.
+def test_CrNiP_P1():
+    """Test material `CrNiP` with space group name `P1`.
 
-    There is no material with such formula and structure
+    There is no material with such formula and space group
     in the database, so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
