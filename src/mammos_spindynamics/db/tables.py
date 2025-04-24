@@ -30,9 +30,9 @@ def get_M(
 ):
     """Get magnetization function from table.
 
-    This function retrieves intrinsic properties at zero temperature
-    given a certain chemical formula, by looking the values
-    in a database.
+    This function retrieves the time-dependent magnetization
+    from a database of spin dynamics calculations, by querying
+    material information or UppASD input files.
 
     :param formula: Chemical formula
     :type formula: str
