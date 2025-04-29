@@ -1,0 +1,1 @@
+"""Package mammos-spindynamics."""

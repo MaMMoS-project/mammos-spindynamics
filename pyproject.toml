@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mammos-spindynamics"
+version = "0.1.0"
+description = "Spin dynamics package."
+readme = "README.md"
+authors = [
+    {name = "Andrea Petrocchi", email = "andrea.petrocchi@mpsd.mpg.de"},
+    {name = "Swapneel Amit Pathak", email = "swapneel-amit.pathak@mpsd.mpg.de"}
+]
+license-files = ["LICENSE"]
+
+requires-python = ">=3.8"
+
+dependencies = [
+    "pandas",
+    "matplotlib >=3.10.1,<4",
+    "rich",
+    "scipy",
+]
+
+[project.urls]
+Repository = "https://github.com/MaMMoS-project/mammos-spindynamics"
+
+[project.optional-dependencies]
+format = [
+    "ruff==0.8",
+]
+test = [
+    "pytest==8.3",
+]
+examples = [
+    "jupyter"
+]
+
+# pixi
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+mammos-spindynamics = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+format = { features = ["format"], solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
+examples = { features = ["examples"], solve-group = "default" }
+
+[tool.pixi.tasks]
+clean = "rm -rf .ruff_cache .pytest_cache"
+
+[tool.pixi.feature.format.tasks]
+format = "ruff format"
+lint = "ruff check"
+
+[tool.pixi.feature.test.tasks]
+test = "pytest -v"
+
+[tool.pixi.feature.examples.tasks]
+examples = "jupyter-lab examples"
+
+# ruff
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+indent-width = 4
+respect-gitignore = true
+
+[tool.ruff.lint]
+select = ["D", "E4", "E7", "E9", "F", "W"] # default rules + pydocstyle + pycodestyle
+ignore = []
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.format]
+quote-style = "double"
