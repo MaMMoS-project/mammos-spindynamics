@@ -1,13 +1,13 @@
 """Functions for reading tables."""
 
-from pathlib import Path
+import pathlib
 import numpy as np
 import pandas as pd
 from rich import print
 from scipy.interpolate import interp1d
 from textwrap import dedent
 
-DIR = Path(__file__).parent
+DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 
 def get_M(
@@ -109,7 +109,7 @@ def load_uppasd_simulation(jfile, momfile, posfile):
     j = parse_jfile(jfile)
     mom = parse_momfile(momfile)
     pos = parse_posfile(posfile)
-    for ii in (DIR / "data").iterdir():
+    for ii in (DATA_DIR).iterdir():
         if check_input_files(ii, j, mom, pos):
             table = pd.read_csv(ii / "M.csv")
             print("Found material in database.")
@@ -313,7 +313,7 @@ def load_ab_initio_data(**kwargs):
     material = df.iloc[0]
     print("Found material in database.")
     print(describe_material(material))
-    return pd.read_csv(DIR / "data" / material.label / "M.csv")
+    return pd.read_csv(DATA_DIR / material.label / "M.csv")
 
 
 def find_materials(**kwargs):
@@ -327,9 +327,9 @@ def find_materials(**kwargs):
     :rtype: pandas.DataFrame
     """
     df = pd.read_csv(
-        DIR / "db.csv",
         dtype={
             "formula": str,
+        DATA_DIR / "db.csv",
             "space_group_name": str,
             "space_group_number": int,
             "cell_length_a": float,
