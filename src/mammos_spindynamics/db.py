@@ -10,8 +10,34 @@ from textwrap import dedent
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 
+def check_short_label(short_label):
+    """Check that short label follows the standards and returns material parameters.
+
+    :param short_label: Short label containing chemical formula and space group
+        number separated by a hyphen.
+    :type short_label: str
+    :raises ValueError: Wrong format.
+    :return: Chemical formula and space group number.
+    :rtype: (str,int)
+    """
+    short_label_list = short_label.split("-")
+    if len(short_label_list) != 2:
+        raise ValueError(
+            dedent(
+                """
+                Wrong format for `short_label`.
+                Please use the format <chemical_formula>-<space_group_number>.
+                """
+            )
+        )
+    chemical_formula = short_label_list[0]
+    space_group_number = int(short_label_list[1])
+    return chemical_formula, space_group_number
+
+
 def get_M(
-    formula=None,
+    short_label=None,
+    chemical_formula=None,
     space_group_name=None,
     space_group_number=None,
     cell_length_a=None,
@@ -34,8 +60,8 @@ def get_M(
     from a database of spin dynamics calculations, by querying
     material information or UppASD input files.
 
-    :param formula: Chemical formula
-    :type formula: str
+    :param chemical_formula: Chemical formula
+    :type chemical_formula: str
     :param space_group_name: Space group name
     :type space_group_name: str
     :param space_group_number: Space group number
@@ -77,7 +103,7 @@ def get_M(
         table = load_uppasd_simulation(jfile=jfile, momfile=momfile, posfile=posfile)
     else:
         table = load_ab_initio_data(
-            formula=formula,
+            chemical_formula=chemical_formula,
             space_group_name=space_group_name,
             space_group_number=space_group_number,
             cell_length_a=cell_length_a,
@@ -328,8 +354,8 @@ def find_materials(**kwargs):
     """
     df = pd.read_csv(
         dtype={
-            "formula": str,
         DATA_DIR / "db.csv",
+            "chemical_formula": str,
             "space_group_name": str,
             "space_group_number": int,
             "cell_length_a": float,
@@ -364,13 +390,16 @@ def describe_material(material=None, material_label=None):
     :type material_label: str
     :return: Well-formatted material information.
     :rtype: str
+    :raise ValueError: Material and material label cannot be both empty.
     """
+    if material is None and material_label is None:
+        raise ValueError("Material and material label cannot be both empty.")
     if material_label is not None:
         df = find_materials()
         material = df[df["label"] == material_label].iloc[0]
     return dedent(
         f"""
-            Chemical Formula: {material.formula}
+            Chemical Formula: {material.chemical_formula}
             Space group name: {material.space_group_name}
             Space group number: {material.space_group_number}
             Cell length a: {material.cell_length_a}
