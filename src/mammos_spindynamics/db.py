@@ -6,6 +6,7 @@ import pandas as pd
 from rich import print
 from scipy.interpolate import interp1d
 from textwrap import dedent
+from astropy.units.quantity import Quantity
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
@@ -353,18 +354,18 @@ def find_materials(**kwargs):
     :rtype: pandas.DataFrame
     """
     df = pd.read_csv(
-        dtype={
         DATA_DIR / "db.csv",
+        converters={
             "chemical_formula": str,
             "space_group_name": str,
             "space_group_number": int,
-            "cell_length_a": float,
-            "cell_length_b": float,
-            "cell_length_c": float,
-            "cell_angle_alpha": float,
-            "cell_angle_beta": float,
-            "cell_angle_gamma": float,
-            "cell_volume": float,
+            "cell_length_a": Quantity,
+            "cell_length_b": Quantity,
+            "cell_length_c": Quantity,
+            "cell_angle_alpha": Quantity,
+            "cell_angle_beta": Quantity,
+            "cell_angle_gamma": Quantity,
+            "cell_volume": Quantity,
             "ICSD_label": str,
             "OQMD_label": str,
             "label": str,
@@ -372,7 +373,10 @@ def find_materials(**kwargs):
     )
     for key, value in kwargs.items():
         if value is not None:
-            df = df[df[key] == value]
+            if type(value) == Quantity:
+                df = df[df[key] == value.to(df[key].unit)]
+            else:
+                df = df[df[key] == value]
     return df
 
 
