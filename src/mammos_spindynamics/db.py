@@ -6,7 +6,7 @@ import pandas as pd
 from rich import print
 from scipy.interpolate import interp1d
 from textwrap import dedent
-from astropy.units.quantity import Quantity
+from mammos_units import Quantity
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
