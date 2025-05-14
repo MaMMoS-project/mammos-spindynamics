@@ -1,12 +1,13 @@
 """Functions for reading tables."""
 
+import mammos_entity as me
+import mammos_units as u
 import pathlib
 import numpy as np
 import pandas as pd
 from rich import print
 from scipy.interpolate import interp1d
 from textwrap import dedent
-from mammos_units import Quantity
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
@@ -36,7 +37,7 @@ def check_short_label(short_label):
     return chemical_formula, space_group_number
 
 
-def get_M(
+def get_spontaneous_magnetisation(
     short_label=None,
     chemical_formula=None,
     space_group_name=None,
@@ -53,13 +54,14 @@ def get_M(
     jfile=None,
     momfile=None,
     posfile=None,
+    print_info=True,
     interpolation_kind="linear",
 ):
-    """Get magnetization function from table.
+    """Get spontaneous magnetization interpolator from a database.
 
-    This function retrieves the time-dependent magnetization
-    from a database of spin dynamics calculations, by querying
-    material information or UppASD input files.
+    This function retrieves the temperature-dependent spontaneous magnetization
+    from a local database of spin dynamics calculations.
+    Data is retrieved by querying material information or UppASD input files.
 
     :param chemical_formula: Chemical formula
     :type chemical_formula: str
@@ -85,6 +87,9 @@ def get_M(
     :type ICSD_label: str
     :param OQMD_label: Label in the the Open Quantum Materials Database.
     :type OQMD_label: str
+    :param print_info: Whether to print information about the retrieved material.
+        Default: true
+    :type print_info: bool
     :param interpolation_kind: attribute `kind` for `scipy.interpolate.interp1d`.
         From scipy's documentation::
 
@@ -101,9 +106,12 @@ def get_M(
     :rtype: scipy.interpolate.iterp1d
     """
     if posfile is not None:
-        table = load_uppasd_simulation(jfile=jfile, momfile=momfile, posfile=posfile)
+        table = load_uppasd_simulation(jfile=jfile, momfile=momfile, posfile=posfile, print_info=print_info)
     else:
+        if short_label is not None:
+            chemical_formula, space_group_number = check_short_label(short_label)
         table = load_ab_initio_data(
+            print_info=print_info,
             chemical_formula=chemical_formula,
             space_group_name=space_group_name,
             space_group_number=space_group_number,
@@ -117,10 +125,10 @@ def get_M(
             ICSD_label=ICSD_label,
             OQMD_label=OQMD_label,
         )
-    return interp1d(table["T[K]"], table["M[muB]"], kind=interpolation_kind)
+    return interp1d(table["T[K]"]*u.K, table["M[A/m]"]*u.A/u.m, kind=interpolation_kind)
 
 
-def load_uppasd_simulation(jfile, momfile, posfile):
+def load_uppasd_simulation(jfile, momfile, posfile, print_info=True):
     """Find UppASD simulation results with given input files in database.
 
     :param jfile: Location of `jfile`
@@ -136,11 +144,12 @@ def load_uppasd_simulation(jfile, momfile, posfile):
     j = parse_jfile(jfile)
     mom = parse_momfile(momfile)
     pos = parse_posfile(posfile)
-    for ii in (DATA_DIR).iterdir():
+    for ii in DATA_DIR.iterdir():
         if check_input_files(ii, j, mom, pos):
             table = pd.read_csv(ii / "M.csv")
-            print("Found material in database.")
-            print(describe_material(material_label=ii.name))
+            if print_info:
+                print("Found material in database.")
+                print(describe_material(material_label=ii.name))
             return table
     raise LookupError("Requested simulation not found in database.")
 
@@ -316,7 +325,7 @@ def check_input_files(dir_i, j, mom, pos):
     return True
 
 
-def load_ab_initio_data(**kwargs):
+def load_ab_initio_data(print_info=True, **kwargs):
     """Load material with given structure information.
 
     :raises LookupError: Requested material not found in database.
@@ -338,8 +347,9 @@ def load_ab_initio_data(**kwargs):
         raise LookupError(error_string)
 
     material = df.iloc[0]
-    print("Found material in database.")
-    print(describe_material(material))
+    if print_info:
+        print("Found material in database.")
+        print(describe_material(material))
     return pd.read_csv(DATA_DIR / material.label / "M.csv")
 
 
@@ -359,13 +369,13 @@ def find_materials(**kwargs):
             "chemical_formula": str,
             "space_group_name": str,
             "space_group_number": int,
-            "cell_length_a": Quantity,
-            "cell_length_b": Quantity,
-            "cell_length_c": Quantity,
-            "cell_angle_alpha": Quantity,
-            "cell_angle_beta": Quantity,
-            "cell_angle_gamma": Quantity,
-            "cell_volume": Quantity,
+            "cell_length_a": u.Quantity,
+            "cell_length_b": u.Quantity,
+            "cell_length_c": u.Quantity,
+            "cell_angle_alpha": u.Quantity,
+            "cell_angle_beta": u.Quantity,
+            "cell_angle_gamma": u.Quantity,
+            "cell_volume": u.Quantity,
             "ICSD_label": str,
             "OQMD_label": str,
             "label": str,
@@ -373,7 +383,7 @@ def find_materials(**kwargs):
     )
     for key, value in kwargs.items():
         if value is not None:
-            if type(value) == Quantity:
+            if type(value) == u.Quantity:
                 df = df[df[key] == value.to(df[key].unit)]
             else:
                 df = df[df[key] == value]
