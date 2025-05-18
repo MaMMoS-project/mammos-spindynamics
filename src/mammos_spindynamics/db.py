@@ -145,7 +145,7 @@ def load_uppasd_simulation(jfile, momfile, posfile, print_info=True):
     mom = parse_momfile(momfile)
     pos = parse_posfile(posfile)
     for ii in DATA_DIR.iterdir():
-        if check_input_files(ii, j, mom, pos):
+        if ii.is_dir() and check_input_files(ii, j, mom, pos):
             table = pd.read_csv(ii / "M.csv")
             if print_info:
                 print("Found material in database.")
