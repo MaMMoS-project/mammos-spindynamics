@@ -1,6 +1,5 @@
 """Functions for reading tables."""
 
-import mammos_entity as me
 import mammos_units as u
 import pathlib
 import numpy as np
@@ -106,7 +105,9 @@ def get_spontaneous_magnetisation(
     :rtype: scipy.interpolate.iterp1d
     """
     if posfile is not None:
-        table = load_uppasd_simulation(jfile=jfile, momfile=momfile, posfile=posfile, print_info=print_info)
+        table = load_uppasd_simulation(
+            jfile=jfile, momfile=momfile, posfile=posfile, print_info=print_info
+        )
     else:
         if short_label is not None:
             chemical_formula, space_group_number = check_short_label(short_label)
@@ -125,7 +126,9 @@ def get_spontaneous_magnetisation(
             ICSD_label=ICSD_label,
             OQMD_label=OQMD_label,
         )
-    return interp1d(table["T[K]"]*u.K, table["M[A/m]"]*u.A/u.m, kind=interpolation_kind)
+    return interp1d(
+        table["T[K]"] * u.K, table["M[A/m]"] * u.A / u.m, kind=interpolation_kind
+    )
 
 
 def load_uppasd_simulation(jfile, momfile, posfile, print_info=True):
@@ -383,7 +386,7 @@ def find_materials(**kwargs):
     )
     for key, value in kwargs.items():
         if value is not None:
-            if type(value) == u.Quantity:
+            if isinstance(value, u.Quantity):
                 df = df[df[key] == value.to(df[key].unit)]
             else:
                 df = df[df[key] == value]
