@@ -32,11 +32,10 @@ def kuzmin(
         at a given temperature.
     :rtype: (mammos_entity.Ms, mammos_entity.A, mammos_entity.K) | (callable)
     """
-    if (
-        Ms_0.unit != u.A / u.m
-        or K1_0.unit != u.J / u.m**3
-    ):
-        raise ValueError("Wrong unit.")  # TODO add more ?
+    if not isinstance(Ms_0, u.Quantity) or Ms_0.unit != u.A / u.m:
+        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
+    if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
+        K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
     def M_kuzmin(T_, T_c_, s_):
         return np.where(
