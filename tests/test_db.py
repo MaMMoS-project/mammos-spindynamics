@@ -1,11 +1,12 @@
 """Test db lookup."""
 
+import numpy as np
 import pathlib
 import pytest
 
-from mammos_spindynamics.db import get_M
+from mammos_spindynamics.db import get_spontaneous_magnetisation
 
-DATA = pathlib.Path(__file__).parent.resolve() / "data"
+DATA_DIR = pathlib.Path(__file__).parent.resolve() / "data"
 
 
 def test_CrNiP():
@@ -14,9 +15,9 @@ def test_CrNiP():
     There is only one material with formula `CrNiP`, so this
     test should load its table without issues.
     """
-    M = get_M(formula="CrNiP")
-    assert M(400) == 0.002092
-    assert M(450) == 0.5 * (0.002092 + 0.002304)
+    M = get_spontaneous_magnetisation(chemical_formula="CrNiP", print_info=False)
+    assert np.allclose(M(400), 186.92772987574517)
+    assert np.allclose(M(450), 0.5 * (186.92772987574517 + 205.8706929415473))
 
 
 def test_NdFe14B():
@@ -26,17 +27,19 @@ def test_NdFe14B():
     so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_M(formula="NdFe14B")
+        get_spontaneous_magnetisation(chemical_formula="NdFe14B")
 
 
-def test_CrNiP_P1():
-    """Test material `CrNiP` with space group name `P1`.
+def test_CrNiP_11():
+    """Test material `CrNiP` with space group number 11.
 
     There is no material with such formula and space group
     in the database, so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_M(formula="Co2Fe2H4", space_group_name="P1")
+        get_spontaneous_magnetisation(
+            chemical_formula="Co2Fe2H4", space_group_number=11
+        )
 
 
 def test_all():
@@ -46,7 +49,7 @@ def test_all():
     so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_M()
+        get_spontaneous_magnetisation()
 
 
 def test_uppasd_known():
@@ -54,13 +57,14 @@ def test_uppasd_known():
 
     We expect this test to pass and retrieve a known material.
     """
-    M = get_M(
-        jfile=DATA / "known_material" / "jfile",
-        momfile=DATA / "known_material" / "momfile",
-        posfile=DATA / "known_material" / "posfile",
+    M = get_spontaneous_magnetisation(
+        jfile=DATA_DIR / "known_material" / "jfile",
+        momfile=DATA_DIR / "known_material" / "momfile",
+        posfile=DATA_DIR / "known_material" / "posfile",
+        print_info=False,
     )
-    assert M(400) == 1.38120701
-    assert M(450) == 0.5 * (1.3495301 + 1.33638686)
+    assert np.allclose(M(400), 990071.556207981)
+    assert np.allclose(M(450), 0.5 * (967365.0340483808 + 957943.7467350367))
 
 
 def test_uppasd_unknown():
@@ -69,10 +73,10 @@ def test_uppasd_unknown():
     We expect this test to fail with a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_M(
-            jfile=DATA / "unknown_material" / "jfile",
-            momfile=DATA / "unknown_material" / "momfile",
-            posfile=DATA / "unknown_material" / "posfile",
+        get_spontaneous_magnetisation(
+            jfile=DATA_DIR / "unknown_material" / "jfile",
+            momfile=DATA_DIR / "unknown_material" / "momfile",
+            posfile=DATA_DIR / "unknown_material" / "posfile",
         )
 
 
@@ -82,8 +86,8 @@ def test_uppasd_incorrect():
     We expect this test to fail with a `SyntaxError`.
     """
     with pytest.raises(SyntaxError):
-        get_M(
-            jfile=DATA / "wrong_data" / "jfile",
-            momfile=DATA / "wrong_data" / "momfile",
-            posfile=DATA / "wrong_data" / "posfile",
+        get_spontaneous_magnetisation(
+            jfile=DATA_DIR / "wrong_data" / "jfile",
+            momfile=DATA_DIR / "wrong_data" / "momfile",
+            posfile=DATA_DIR / "wrong_data" / "posfile",
         )
