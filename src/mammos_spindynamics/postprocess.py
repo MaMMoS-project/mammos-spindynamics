@@ -41,17 +41,17 @@ def kuzmin(
     def M_kuzmin(T_, T_c_, s_):
         return np.where(
             T_ < T_c_,
-            Ms_0
+            Ms_0.value
             * (
                 (1 - s_ * (T_ / T_c_) ** 1.5 - (1 - s_) * (T_ / T_c_) ** 2.5)
                 ** (1.0 / 3)
             ),
-            0.0 * Ms_0.unit,
+            0.0,
         )
 
     def residuals(params_, T_, M_):
         T_c_, s_ = params_
-        return M_ - M_kuzmin(T_*u.K, T_c_*u.K, s_).value
+        return M_ - M_kuzmin(T_, T_c_, s_)
 
     with warnings.catch_warnings(action="ignore"):
         results = least_squares(
@@ -69,19 +69,19 @@ def kuzmin(
         * u.constants.k_B
         * T_c
     ).si
-    A_0 = (Ms_0 * D / (4 * u.constants.muB)).to(u.J / u.m)
+    A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
 
     def M_func(Temp):
-        return M_kuzmin(Temp, T_c, s)
+        return me.Ms(M_kuzmin(Temp.value, T_c.value, s))
 
     def A_func(Temp):
-        return A_0 * (M_func(Temp) / Ms_0) ** 2
+        return me.A(A_0 * (M_func(Temp) / Ms_0) ** 2)
 
     def K_func(Temp):
-        return K1_0 * (M_func(Temp) / Ms_0) ** 3
+        return me.Ku(K1_0 * (M_func(Temp) / Ms_0) ** 3)
 
     if T is not None:
-        if not isinstance(T, u.Quantity):
+        if not isinstance(T, u.Quantity) or T.unit != u.K:
             T = T * u.K
         Ms = me.Ms(M_func(T))
         A = me.A(A_func(T))
