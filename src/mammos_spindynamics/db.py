@@ -287,43 +287,53 @@ def check_input_files(dir_i, j, mom, pos):
     :returns: `True` if the inputs match almost exactly. `False` otherwise.
     :rtype: bool
     """
-    j_i = parse_jfile(dir_i / "jfile")
-    if not j_i.drop("exchange_energy[mRy]", axis=1).equals(
-        j.drop("exchange_energy[mRy]", axis=1)
-    ):
-        return False
-    if not np.allclose(
-        j_i["exchange_energy[mRy]"].to_numpy(),
-        j["exchange_energy[mRy]"].to_numpy(),
+    if not (
+        (dir_i / "jfile").is_file()
+        or (dir_i / "momfile").is_file()
+        or (dir_i / "posfile").is_file()
     ):
         return False
 
-    mom_i = parse_momfile(dir_i / "momfile")
-    if len(mom_i) != len(mom):
-        return False
-    for index, site in mom_i.items():
-        if (
-            site["chemical_type"] != mom[index]["chemical_type"]
-            or not np.allclose(
-                site["magnetic_moment_magnitude[muB]"],
-                mom[index]["magnetic_moment_magnitude[muB]"],
-            )
-            or not np.allclose(
-                site["magnetic_moment_direction"],
-                mom[index]["magnetic_moment_direction"],
-            )
+    if (dir_i / "jfile").is_file():
+        j_i = parse_jfile(dir_i / "jfile")
+        if not j_i.drop("exchange_energy[mRy]", axis=1).equals(
+            j.drop("exchange_energy[mRy]", axis=1)
+        ):
+            return False
+        if not np.allclose(
+            j_i["exchange_energy[mRy]"].to_numpy(),
+            j["exchange_energy[mRy]"].to_numpy(),
         ):
             return False
 
-    pos_i = parse_posfile(dir_i / "posfile")
-    if len(pos_i) != len(pos):
-        return False
-    for index, atom in pos_i.items():
-        if atom["atom_type"] != pos[index]["atom_type"] or not np.allclose(
-            atom["atom_position"],
-            pos[index]["atom_position"],
-        ):
+    if (dir_i / "momfile").is_file():
+        mom_i = parse_momfile(dir_i / "momfile")
+        if len(mom_i) != len(mom):
             return False
+        for index, site in mom_i.items():
+            if (
+                site["chemical_type"] != mom[index]["chemical_type"]
+                or not np.allclose(
+                    site["magnetic_moment_magnitude[muB]"],
+                    mom[index]["magnetic_moment_magnitude[muB]"],
+                )
+                or not np.allclose(
+                    site["magnetic_moment_direction"],
+                    mom[index]["magnetic_moment_direction"],
+                )
+            ):
+                return False
+
+    if (dir_i / "posfile").is_file():
+        pos_i = parse_posfile(dir_i / "posfile")
+        if len(pos_i) != len(pos):
+            return False
+        for index, atom in pos_i.items():
+            if atom["atom_type"] != pos[index]["atom_type"] or not np.allclose(
+                atom["atom_position"],
+                pos[index]["atom_position"],
+            ):
+                return False
 
     return True
 
