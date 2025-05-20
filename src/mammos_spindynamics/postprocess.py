@@ -1,18 +1,19 @@
 """Postprocessing functions."""
 
-from scipy.optimize import least_squares
+from collections.abc import Callable
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
+from scipy import interpolate, optimize
+from typing import NamedTuple
 import warnings
 
 
 def kuzmin(
-    Ms_data,
-    Ms_0,
-    K1_0,
-    T=None,
-):
+    Ms_data: interpolate.interp1d,
+    Ms_0: me.Entity,
+    K1_0: me.Entity,
+) -> tuple(Callable[[u.Quantity], me.Entity]):
     """Evaluate micromagnetic intrinsic properties.
 
     If temperature T is given, evaluate them at that temperature.
@@ -22,11 +23,9 @@ def kuzmin(
     :param Ms_data: Interpolator on spontaneous magnetisation data.
     :type Ms_data: scipy.interpolate.iterp1d
     :param Ms_0: Spontaneous magnetisation at temperature 0K.
-    :type Ms_0: mammos_entity.Ms
+    :type Ms_0: mammos_entity.Entity
     :param K1_0: Magnetocrystalline anisotropy at temperature 0K.
-    :type K1_0: mammos_entity.Ku
-    :param T: Temperature, defaults to None
-    :type T: mammos_units.Quantity | int | float, optional
+    :type K1_0: mammos_entity.Entity
     :raises ValueError: Wrong unit.
     :return: Either functions of temperature or intrinsic properties
         at a given temperature.
@@ -53,7 +52,7 @@ def kuzmin(
         return M_ - M_kuzmin(T_, T_c_, s_)
 
     with warnings.catch_warnings(action="ignore"):
-        results = least_squares(
+        results = optimize.least_squares(
             residuals,
             (400, 0.5),
             args=(Ms_data.x, Ms_data.y),
@@ -79,13 +78,5 @@ def kuzmin(
     def K_func(Temp):
         return me.Ku(K1_0 * (M_func(Temp) / Ms_0) ** 3)
 
-    if T is not None:
-        if not isinstance(T, u.Quantity) or T.unit != u.K:
-            T = T * u.K
-        Ms = me.Ms(M_func(T))
-        A = me.A(A_func(T))
-        Ku = me.Ku(K_func(T))
-        return Ms, A, Ku
-    else:
-        return M_func, A_func, K_func
-    return
+    out = NamedTuple("kuzmin", [("Ms", Callable[[u.Quantity], me.Entity]), ("A", Callable[[u.Quantity], me.Entity]), ("K1", Callable[[u.Quantity], me.Entity])])
+    return out(M_func, A_func, K_func)
