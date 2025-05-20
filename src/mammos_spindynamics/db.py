@@ -1,12 +1,14 @@
 """Functions for reading tables."""
 
+import mammos_entity as me
 import mammos_units as u
-import pathlib
 import numpy as np
 import pandas as pd
+import pathlib
 from rich import print
 from scipy.interpolate import interp1d
 from textwrap import dedent
+from typing import NamedTuple
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
@@ -126,8 +128,16 @@ def get_spontaneous_magnetisation(
             ICSD_label=ICSD_label,
             OQMD_label=OQMD_label,
         )
-    return interp1d(
-        table["T[K]"] * u.K, table["M[A/m]"] * u.A / u.m, kind=interpolation_kind
+
+    MagnetisationData = NamedTuple(
+        "MagnetisationData", [("dataframe", pd.DataFrame), ("entity_map", dict)]
+    )
+    return MagnetisationData(
+        table,
+        {
+            "T": me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
+            "Ms": me.Ms(table["M[A/m]"], unit=u.A / u.m),
+        },
     )
 
 
