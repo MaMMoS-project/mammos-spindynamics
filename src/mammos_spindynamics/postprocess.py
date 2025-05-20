@@ -1,17 +1,19 @@
 """Postprocessing functions."""
 
 from collections.abc import Callable
+from functools import partial
 import mammos_entity as me
 import mammos_units as u
+import numbers
 import numpy as np
+import pandas as pd
 from scipy import interpolate, optimize
 from typing import NamedTuple
 import warnings
 
 
 def kuzmin(
-    Ms_data: interpolate.interp1d,
-    Ms_0: me.Entity,
+    Ms_data: pd.DataFrame,
     K1_0: me.Entity,
 ) -> tuple(Callable[[u.Quantity], me.Entity]):
     """Evaluate micromagnetic intrinsic properties.
@@ -22,8 +24,6 @@ def kuzmin(
 
     :param Ms_data: Interpolator on spontaneous magnetisation data.
     :type Ms_data: scipy.interpolate.iterp1d
-    :param Ms_0: Spontaneous magnetisation at temperature 0K.
-    :type Ms_0: mammos_entity.Entity
     :param K1_0: Magnetocrystalline anisotropy at temperature 0K.
     :type K1_0: mammos_entity.Entity
     :raises ValueError: Wrong unit.
@@ -31,31 +31,21 @@ def kuzmin(
         at a given temperature.
     :rtype: (mammos_entity.Ms, mammos_entity.A, mammos_entity.K) | (callable)
     """
-    if not isinstance(Ms_0, u.Quantity) or Ms_0.unit != u.A / u.m:
-        Ms_0 = me.Ms(Ms_0, unit=u.A / u.m)
     if not isinstance(K1_0, u.Quantity) or K1_0.unit != u.J / u.m**3:
         K1_0 = me.Ku(K1_0, unit=u.J / u.m**3)
 
-    def M_kuzmin(T_, T_c_, s_):
-        return np.where(
-            T_ < T_c_,
-            Ms_0.value
-            * (
-                (1 - s_ * (T_ / T_c_) ** 1.5 - (1 - s_) * (T_ / T_c_) ** 2.5)
-                ** (1.0 / 3)
-            ),
-            0.0,
-        )
+    Ms_0 = me.Ms(Ms_data["M[A/m]"][0], unit=u.A / u.m)
+    M_kuzmin = partial(generic_kuzmin, Ms_0.value)
 
     def residuals(params_, T_, M_):
         T_c_, s_ = params_
-        return M_ - M_kuzmin(T_, T_c_, s_)
+        return M_ - M_kuzmin(T_c_, s_, T_)
 
     with warnings.catch_warnings(action="ignore"):
         results = optimize.least_squares(
             residuals,
             (400, 0.5),
-            args=(Ms_data.x, Ms_data.y),
+            args=(Ms_data["T[K]"], Ms_data["M[A/m]"]),
             bounds=((0, 0), (np.inf, np.inf)),
             jac="3-point",
         )
@@ -69,14 +59,74 @@ def kuzmin(
     ).si
     A_0 = me.A(Ms_0 * D / (4 * u.constants.muB), unit=u.J / u.m)
 
-    def M_func(Temp):
-        return me.Ms(M_kuzmin(Temp.value, T_c.value, s))
+    return KuzminResult(
+        Ms_function_of_temperature(Ms_0.value, T_c.value, s),
+        A_function_of_temperature(A_0, Ms_0.value, T_c.value, s),
+        K1_function_of_temperature(K1_0, Ms_0.value, T_c.value, s),
+    )
 
-    def A_func(Temp):
-        return me.A(A_0 * (M_func(Temp) / Ms_0) ** 2)
 
-    def K_func(Temp):
-        return me.Ku(K1_0 * (M_func(Temp) / Ms_0) ** 3)
+def generic_kuzmin(Ms_0, T_c, s, T):
+    return np.where(
+        T < T_c,
+        Ms_0 * ((1 - s * (T / T_c) ** 1.5 - (1 - s) * (T / T_c) ** 2.5) ** (1.0 / 3)),
+        0.0,
+    )
 
-    out = NamedTuple("kuzmin", [("Ms", Callable[[u.Quantity], me.Entity]), ("A", Callable[[u.Quantity], me.Entity]), ("K1", Callable[[u.Quantity], me.Entity])])
-    return out(M_func, A_func, K_func)
+
+class A_function_of_temperature:
+    def __init__(self, A_0, Ms_0, T_c, s):
+        self.A_0 = A_0
+        self.Ms_0 = Ms_0
+        self.T_c = T_c
+        self.s = s
+
+    def __repr__(self):
+        return "A(T)"
+
+    def __call__(self, T: numbers.Real | u.Quantity):
+        if isinstance(T, u.Quantity):
+            T = T.to(u.K).value
+        return me.A(
+            self.A_0 * (generic_kuzmin(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 2
+        )
+
+
+class K1_function_of_temperature:
+    def __init__(self, K1_0, Ms_0, T_c, s):
+        self.K1_0 = K1_0
+        self.Ms_0 = Ms_0
+        self.T_c = T_c
+        self.s = s
+
+    def __repr__(self):
+        return "K1(T)"
+
+    def __call__(self, T: numbers.Real | u.Quantity):
+        if isinstance(T, u.Quantity):
+            T = T.to(u.K).value
+        return me.Ku(
+            self.K1_0
+            * (generic_kuzmin(self.Ms_0, self.T_c, self.s, T) / self.Ms_0) ** 3
+        )
+
+
+class Ms_function_of_temperature:
+    def __init__(self, Ms_0, T_c, s):
+        self.Ms_0 = Ms_0
+        self.T_c = T_c
+        self.s = s
+
+    def __repr__(self):
+        return "Ms(T)"
+
+    def __call__(self, T: numbers.Real | u.Quantity):
+        if isinstance(T, u.Quantity):
+            T = T.to(u.K).value
+        return me.Ms(generic_kuzmin(self.Ms_0, self.T_c, self.s, T))
+
+
+class KuzminResult(NamedTuple):
+    Ms: Callable[[u.Quantity], me.Entity]
+    A: Callable[[u.Quantity], me.Entity]
+    K1: Callable[[u.Quantity], me.Entity]
