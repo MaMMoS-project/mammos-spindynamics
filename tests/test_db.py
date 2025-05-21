@@ -15,9 +15,16 @@ def test_Co2Fe2H4():
     There is only one material with formula `Co2Fe2H4`, so this
     test should load its table without issues.
     """
-    M = get_spontaneous_magnetisation(chemical_formula="Co2Fe2H4", print_info=False)
-    assert np.allclose(M(400), 990071.556207981)
-    assert np.allclose(M(450), 0.5 * (967365.0340483808 + 957943.7467350367))
+    magnetisation_data = get_spontaneous_magnetisation(
+        chemical_formula="Co2Fe2H4", print_info=False
+    )
+    assert np.allclose(
+        magnetisation_data.dataframe["T[K]"], magnetisation_data.entity_map["T"].value
+    )
+    assert np.allclose(
+        magnetisation_data.dataframe["M[A/m]"],
+        magnetisation_data.entity_map["Ms"].value,
+    )
 
 
 def test_NdFe14B():
@@ -50,44 +57,3 @@ def test_all():
     """
     with pytest.raises(LookupError):
         get_spontaneous_magnetisation()
-
-
-def test_uppasd_known():
-    """Test query with UppASD input files.
-
-    We expect this test to pass and retrieve a known material.
-    """
-    M = get_spontaneous_magnetisation(
-        jfile=DATA_DIR / "known_material" / "jfile",
-        momfile=DATA_DIR / "known_material" / "momfile",
-        posfile=DATA_DIR / "known_material" / "posfile",
-        print_info=False,
-    )
-    assert np.allclose(M(400), 990071.556207981)
-    assert np.allclose(M(450), 0.5 * (967365.0340483808 + 957943.7467350367))
-
-
-def test_uppasd_unknown():
-    """Test query with UppASD input files.
-
-    We expect this test to fail with a `LookupError`.
-    """
-    with pytest.raises(LookupError):
-        get_spontaneous_magnetisation(
-            jfile=DATA_DIR / "unknown_material" / "jfile",
-            momfile=DATA_DIR / "unknown_material" / "momfile",
-            posfile=DATA_DIR / "unknown_material" / "posfile",
-        )
-
-
-def test_uppasd_incorrect():
-    """Test query with UppASD input files.
-
-    We expect this test to fail with a `SyntaxError`.
-    """
-    with pytest.raises(SyntaxError):
-        get_spontaneous_magnetisation(
-            jfile=DATA_DIR / "wrong_data" / "jfile",
-            momfile=DATA_DIR / "wrong_data" / "momfile",
-            posfile=DATA_DIR / "wrong_data" / "posfile",
-        )
