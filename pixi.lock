@@ -1603,8 +1603,8 @@ packages:
   requires_python: '>=3.8'
 - pypi: .
   name: mammos-spindynamics
-  version: 0.1.4
-  sha256: 6087ce86afa76672182b285f5d4df7082c1ad1d4b80b212a8e801393ff029853
+  version: 0.1.5
+  sha256: d6bc07742b153068b8db8615139743384ef7a423a624b455d44e10daa1d56a4d
   requires_dist:
   - mammos-entity>=0.2.1
   - mammos-units
