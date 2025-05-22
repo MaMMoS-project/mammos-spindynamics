@@ -18,12 +18,10 @@ def test_Co2Fe2H4():
     magnetisation_data = get_spontaneous_magnetisation(
         chemical_formula="Co2Fe2H4", print_info=False
     )
-    assert np.allclose(
-        magnetisation_data.dataframe["T[K]"], magnetisation_data.entity_map["T"].value
-    )
+    assert np.allclose(magnetisation_data.dataframe["T[K]"], magnetisation_data.T.value)
     assert np.allclose(
         magnetisation_data.dataframe["M[A/m]"],
-        magnetisation_data.entity_map["Ms"].value,
+        magnetisation_data.Ms.value,
     )
 
 
