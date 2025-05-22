@@ -1,8 +1,7 @@
 """Package mammos-spindynamics."""
 
-from mammos_spindynamics import db, postprocess
+from mammos_spindynamics import db
 
 __all__ = [
     "db",
-    "postprocess",
 ]
