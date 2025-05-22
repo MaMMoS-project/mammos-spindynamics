@@ -62,7 +62,7 @@ def get_spontaneous_magnetisation(
     posfile=None,
     print_info: bool = True,
     interpolation_kind: str = "linear",
-) -> scipy.interpolate.iterp1d:
+) -> tuple:
     """Get spontaneous magnetization interpolator from a database.
 
     This function retrieves the temperature-dependent spontaneous magnetization
@@ -298,7 +298,9 @@ def parse_posfile(posfile: str | pathlib.Path) -> dict:
         ) from None
 
 
-def check_input_files(dir_i, j, mom, pos):
+def check_input_files(
+    dir_i: pathlib.Path, j: pandas.DataFrame, mom: dict, pos: dict
+) -> bool:
     """Check if UppASD inputs are equivalent to the ones in directory `dir_i`.
 
     The extracted input information `j`, `mom`, and `pos` are compared with the
@@ -306,10 +308,10 @@ def check_input_files(dir_i, j, mom, pos):
     If the inputs are close enough, this function returns `True`.
 
     Args:
-        dir_i (pathlib.Path): Considered directory in the database
-        j (pandas.DataFrame): Dataframe of exchange interactions.
-        mom (dict): Dictionary of magnetic moment information.
-        pos (dict): Dictionary of atoms position information.
+        dir_i: Considered directory in the database
+        j: Dataframe of exchange interactions.
+        mom: Dictionary of magnetic moment information.
+        pos: Dictionary of atoms position information.
 
     Returns:
         bool: True` if the inputs match almost exactly. `False` otherwise.
