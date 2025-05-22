@@ -1,15 +1,17 @@
 """Functions for reading tables."""
 
-import mammos_entity as me
-import mammos_units as u
+from __future__ import annotations
 import numpy as np
+import pandas
 import pandas as pd
 import pathlib
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 from rich import print
 from textwrap import dedent
-from typing import NamedTuple
-import scipy.interpolate
-import pandas
+
+import mammos_entity as me
+import mammos_units as u
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
@@ -60,9 +62,8 @@ def get_spontaneous_magnetisation(
     jfile=None,
     momfile=None,
     posfile=None,
-    interpolation_kind: str = "linear",
     print_info: bool = False,
-) -> tuple:
+) -> MagnetisationData:
     """Get spontaneous magnetization interpolator from a database.
 
     This function retrieves the temperature-dependent spontaneous magnetization
@@ -87,16 +88,6 @@ def get_spontaneous_magnetisation(
         momfile: TODO
         posfile: TODO
         print_info: Whether to print information about the retrieved material.
-        interpolation_kind: attribute `kind` for `scipy.interpolate.interp1d`.
-            From scipy's documentation::
-
-            The string has to be one of `linear`, `nearest`, `nearest-up`, `zero`,
-            `slinear`, `quadratic`, `cubic`, `previous`, or `next`. `zero`, `slinear`,
-            `quadratic` and `cubic` refer to a spline interpolation of zeroth, first,
-            second or third order; `previous` and `next` simply return the previous or
-            next value of the point; `nearest-up` and `nearest` differ when
-            interpolating half-integers (e.g. 0.5, 1.5) in that `nearest-up` rounds
-            up and `nearest` rounds down. Default is `linear`.
 
     Returns:
         Interpolator function based on available data.
@@ -125,16 +116,23 @@ def get_spontaneous_magnetisation(
             OQMD_label=OQMD_label,
         )
 
-    MagnetisationData = NamedTuple(
-        "MagnetisationData", [("dataframe", pd.DataFrame), ("entity_map", dict)]
-    )
     return MagnetisationData(
         table,
-        {
-            "T": me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
-            "Ms": me.Ms(table["M[A/m]"], unit=u.A / u.m),
-        },
+        me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
+        me.Ms(table["M[A/m]"], unit=u.A / u.m),
     )
+
+
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
+class MagnetisationData:
+    """Magnetisation data.
+
+    Contains temperature and spontaneous magnetisation data.
+    """
+
+    dataframe: pd.DataFrame
+    T: me.Entity
+    Ms: me.Entity
 
 
 def load_uppasd_simulation(
