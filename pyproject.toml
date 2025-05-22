@@ -82,7 +82,7 @@ ignore = []
 max-doc-length = 88
 
 [tool.ruff.lint.pydocstyle]
-convention = "pep257"
+convention = "google"
 
 [tool.ruff.format]
 quote-style = "double"
