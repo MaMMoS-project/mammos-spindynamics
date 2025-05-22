@@ -32,7 +32,7 @@ APIs and tutorials are available in the documentation. To access the documentati
 
 ## Installation
 
-To install `mammos-units`, you can use `pip install mammos-units` inside a Python environment.
+To install `mammos-spindynamics`, you can use `pip install mammos-spindynamics` inside a Python virtual environment.
 For more details refer to the documentation.
 
 ## How to cite
