@@ -19,9 +19,9 @@ dependencies = [
     "mammos_entity >=0.2.1",
     "mammos_units",
     "pandas",
+    "pydantic",
     "matplotlib >=3.10.1,<4",
     "rich",
-    "scipy",
 ]
 
 [project.urls]
