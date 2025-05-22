@@ -1,14 +1,6 @@
 # spindynamics
 Spin dynamics package.
 
-## Example
-See the example notebooks:
-- [Query database for spontaneous magnetisation data](examples/spontaneous_magnetisation.ipynb).
-- [Possible lookup failures](examples/fail.ipynb).
-- [How are UppASD inputs stored internally](examples/uppasd_internal.ipynb).
-
-
-
 | Description   | Badge                                                                                                                                                                         |
 |---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Tests         | [![Test package](https://github.com/MaMMoS-project/mammos-units/actions/workflows/test.yml/badge.svg)](https://github.com/MaMMoS-project/mammos-units/actions/workflows/test.yml) |
