@@ -60,8 +60,8 @@ def get_spontaneous_magnetisation(
     jfile=None,
     momfile=None,
     posfile=None,
-    print_info: bool = True,
     interpolation_kind: str = "linear",
+    print_info: bool = False,
 ) -> tuple:
     """Get spontaneous magnetization interpolator from a database.
 
@@ -141,7 +141,7 @@ def load_uppasd_simulation(
     jfile: str | pathlib.Path,
     momfile: str | pathlib.Path,
     posfile: str | pathlib.Path,
-    print_info: bool = True,
+    print_info: bool = False,
 ) -> pandas.DataFrame:
     """Find UppASD simulation results with given input files in database.
 
@@ -368,7 +368,7 @@ def check_input_files(
     return True
 
 
-def load_ab_initio_data(print_info: bool = True, **kwargs) -> pandas.DataFrame:
+def load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
     """Load material with given structure information.
 
     Args:
