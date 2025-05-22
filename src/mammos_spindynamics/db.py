@@ -6,22 +6,27 @@ import numpy as np
 import pandas as pd
 import pathlib
 from rich import print
-from scipy.interpolate import interp1d
 from textwrap import dedent
 from typing import NamedTuple
+import scipy.interpolate
+import pandas
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 
-def check_short_label(short_label):
+def check_short_label(short_label: str) -> str | int:
     """Check that short label follows the standards and returns material parameters.
 
-    :param short_label: Short label containing chemical formula and space group
-        number separated by a hyphen.
-    :type short_label: str
-    :raises ValueError: Wrong format.
-    :return: Chemical formula and space group number.
-    :rtype: (str,int)
+    Args:
+        short_label: Short label containing chemical formula and space group
+    number separated by a hyphen.
+
+    Returns:
+        Chemical formula and space group number.
+
+    Raises:
+        ValueError: Wrong format.
+
     """
     short_label_list = short_label.split("-")
     if len(short_label_list) != 2:
@@ -39,60 +44,51 @@ def check_short_label(short_label):
 
 
 def get_spontaneous_magnetisation(
-    short_label=None,
-    chemical_formula=None,
-    space_group_name=None,
-    space_group_number=None,
-    cell_length_a=None,
-    cell_length_b=None,
-    cell_length_c=None,
-    cell_angle_alpha=None,
-    cell_angle_beta=None,
-    cell_angle_gamma=None,
-    cell_volume=None,
-    ICSD_label=None,
-    OQMD_label=None,
+    short_label: str | None = None,
+    chemical_formula: str | None = None,
+    space_group_name: str | None = None,
+    space_group_number: int | None = None,
+    cell_length_a: float | None = None,
+    cell_length_b: float | None = None,
+    cell_length_c: float | None = None,
+    cell_angle_alpha: float | None = None,
+    cell_angle_beta: float | None = None,
+    cell_angle_gamma: float | None = None,
+    cell_volume: float | None = None,
+    ICSD_label: str | None = None,
+    OQMD_label: str | None = None,
     jfile=None,
     momfile=None,
     posfile=None,
-    print_info=True,
-    interpolation_kind="linear",
-):
+    print_info: bool = True,
+    interpolation_kind: str = "linear",
+) -> scipy.interpolate.iterp1d:
     """Get spontaneous magnetization interpolator from a database.
 
     This function retrieves the temperature-dependent spontaneous magnetization
     from a local database of spin dynamics calculations.
     Data is retrieved by querying material information or UppASD input files.
 
-    :param chemical_formula: Chemical formula
-    :type chemical_formula: str
-    :param space_group_name: Space group name
-    :type space_group_name: str
-    :param space_group_number: Space group number
-    :type space_group_number: int
-    :param cell_length_a: Cell length x
-    :type cell_length_a: float
-    :param cell_length_b: Cell length y
-    :type cell_length_b: float
-    :param cell_length_c: Cell length z
-    :type cell_length_c: float
-    :param cell_angle_alpha: Cell angle alpha
-    :type cell_angle_alpha: float
-    :param cell_angle_beta: Cell angle beta
-    :type cell_angle_beta: float
-    :param cell_angle_gamma: Cell angle gamma
-    :type cell_angle_gamma: float
-    :param cell_volume: Cell volume
-    :type cell_volume: float
-    :param ICSD_label: Label in the NIST Inorganic Crystal Structure Database.
-    :type ICSD_label: str
-    :param OQMD_label: Label in the the Open Quantum Materials Database.
-    :type OQMD_label: str
-    :param print_info: Whether to print information about the retrieved material.
-        Default: true
-    :type print_info: bool
-    :param interpolation_kind: attribute `kind` for `scipy.interpolate.interp1d`.
-        From scipy's documentation::
+    Args:
+        short_label: short label
+        chemical_formula: Chemical formula
+        space_group_name: Space group name
+        space_group_number: Space group number
+        cell_length_a: Cell length x
+        cell_length_b: Cell length y
+        cell_length_c: Cell length z
+        cell_angle_alpha: Cell angle alpha
+        cell_angle_beta: Cell angle beta
+        cell_angle_gamma: Cell angle gamma
+        cell_volume: Cell volume
+        ICSD_label: Label in the NIST Inorganic Crystal Structure Database.
+        OQMD_label: Label in the the Open Quantum Materials Database.
+        jfile: TODO
+        momfile: TODO
+        posfile: TODO
+        print_info: Whether to print information about the retrieved material.
+        interpolation_kind: attribute `kind` for `scipy.interpolate.interp1d`.
+            From scipy's documentation::
 
             The string has to be one of `linear`, `nearest`, `nearest-up`, `zero`,
             `slinear`, `quadratic`, `cubic`, `previous`, or `next`. `zero`, `slinear`,
@@ -102,9 +98,9 @@ def get_spontaneous_magnetisation(
             interpolating half-integers (e.g. 0.5, 1.5) in that `nearest-up` rounds
             up and `nearest` rounds down. Default is `linear`.
 
-    :type interpolation_kind: str
-    :returns: Interpolator function based on available data.
-    :rtype: scipy.interpolate.iterp1d
+    Returns:
+        Interpolator function based on available data.
+
     """
     if posfile is not None:
         table = load_uppasd_simulation(
@@ -141,18 +137,26 @@ def get_spontaneous_magnetisation(
     )
 
 
-def load_uppasd_simulation(jfile, momfile, posfile, print_info=True):
+def load_uppasd_simulation(
+    jfile: str | pathlib.Path,
+    momfile: str | pathlib.Path,
+    posfile: str | pathlib.Path,
+    print_info: bool = True,
+) -> pandas.DataFrame:
     """Find UppASD simulation results with given input files in database.
 
-    :param jfile: Location of `jfile`
-    :type jfile: str or pathlib.Path
-    :param momfile: Location of `momfile`.
-    :type momfile: str or pathlib.Path
-    :param posfile: Location of `posfile`.
-    :type posfile: str or pathlib.Path
-    :raises LookupError: Simulation not found in database.
-    :return: Table of pre-calculated Temperature-dependent Magnetization values.
-    :rtype: pandas.DataFrame
+    Args:
+        jfile: Location of `jfile`
+        momfile: Location of `momfile`.
+        posfile: Location of `posfile`.
+        print_info: Whether to print information about the retrieved material.
+
+    Returns:
+        Table of pre-calculated Temperature-dependent Magnetization values.
+
+    Raises:
+        LookupError: Simulation not found in database.
+
     """
     j = parse_jfile(jfile)
     mom = parse_momfile(momfile)
@@ -167,16 +171,21 @@ def load_uppasd_simulation(jfile, momfile, posfile, print_info=True):
     raise LookupError("Requested simulation not found in database.")
 
 
-def parse_jfile(jfile):
+def parse_jfile(jfile: str | pathlib.Path) -> pandas.DataFrame:
     """Parse jfile, input for UppASD.
 
-    :param jfile: Location of `jfile`.
-    :type jfile: str or pathlib.Path
-    :returns: Dataframe of exchange interactions.
-    :rtype: pandas.DataFrame
-    :raises SyntaxError: Wrong formatting.
-        See https://uppasd.github.io/UppASD-manual/input/#exchange
-        for the correct formatting.
+    See https://uppasd.github.io/UppASD-manual/input/#exchange
+    for the correct formatting.
+
+    Args:
+        jfile: Location of `jfile`.
+
+    Returns:
+        Dataframe of exchange interactions.
+
+    Raises:
+        SyntaxError: Wrong formatting.
+
     """
     with open(jfile) as ff:
         jlines = ff.readlines()
@@ -210,16 +219,21 @@ def parse_jfile(jfile):
         ) from None
 
 
-def parse_momfile(momfile):
+def parse_momfile(momfile: str | pathlib.Path) -> dict:
     """Parse momfile, input for UppASD.
 
-    :param momfile: Location of `momfile`.
-    :type momfile: str or pathlib.Path
-    :returns: Dictionary of magnetic moment information.
-    :rtype: dict
-    :raises SyntaxError: Wrong formatting.
-        See https://uppasd.github.io/UppASD-manual/input/#momfile
-        for the correct formatting.
+    See https://uppasd.github.io/UppASD-manual/input/#momfile
+    for the correct formatting.
+
+    Args:
+        momfile: Location of `momfile`.
+
+    Returns:
+        Dictionary of magnetic moment information.
+
+    Raises:
+        SyntaxError: Wrong formatting.
+
     """
     with open(momfile) as ff:
         momlines = ff.readlines()
@@ -245,16 +259,21 @@ def parse_momfile(momfile):
         ) from None
 
 
-def parse_posfile(posfile):
+def parse_posfile(posfile: str | pathlib.Path) -> dict:
     """Parse posfile, input for UppASD.
 
-    :param posfile: Location of `posfile`.
-    :type posfile: str or pathlib.Path
-    :returns: Dictionary of atoms position information.
-    :rtype: dict
-    :raises SyntaxError: Wrong formatting.
-        See https://uppasd.github.io/UppASD-manual/input/#posfile
-        for the correct formatting.
+    See https://uppasd.github.io/UppASD-manual/input/#posfile
+    for the correct formatting.
+
+    Args:
+        posfile: Location of `posfile`.
+
+    Returns:
+        Dictionary of atoms position information.
+
+    Raises:
+        SyntaxError: Wrong formatting.
+
     """
     with open(posfile) as ff:
         poslines = ff.readlines()
@@ -286,16 +305,15 @@ def check_input_files(dir_i, j, mom, pos):
     extracted information from the files in directory `dir_i`.
     If the inputs are close enough, this function returns `True`.
 
-    :param dir_i: Considered directory in the database
-    :type dir_i: pathlib.Path
-    :param j: Dataframe of exchange interactions.
-    :type j: pandas.DataFrame
-    :param mom: Dictionary of magnetic moment information.
-    :type mom: dict
-    :param pos: Dictionary of atoms position information.
-    :type pos: dict
-    :returns: `True` if the inputs match almost exactly. `False` otherwise.
-    :rtype: bool
+    Args:
+        dir_i (pathlib.Path): Considered directory in the database
+        j (pandas.DataFrame): Dataframe of exchange interactions.
+        mom (dict): Dictionary of magnetic moment information.
+        pos (dict): Dictionary of atoms position information.
+
+    Returns:
+        bool: True` if the inputs match almost exactly. `False` otherwise.
+
     """
     if not (
         (dir_i / "jfile").is_file()
@@ -348,13 +366,20 @@ def check_input_files(dir_i, j, mom, pos):
     return True
 
 
-def load_ab_initio_data(print_info=True, **kwargs):
+def load_ab_initio_data(print_info: bool = True, **kwargs) -> pandas.DataFrame:
     """Load material with given structure information.
 
-    :raises LookupError: Requested material not found in database.
-    :raises LookupError: Too many results found with this formula.
-    :return: Table of pre-calculated Temperature-dependent Magnetization values.
-    :rtype: pandas.DataFrame
+    Args:
+        print_info: Print info
+        **kwargs: Selection arguments
+
+    Returns:
+        Table of pre-calculated Temperature-dependent Magnetization values.
+
+    Raises:
+        LookupError: Requested material not found in database.
+        LookupError: Too many results found with this formula.
+
     """
     df = find_materials(**kwargs)
     num_results = len(df)
@@ -376,15 +401,18 @@ def load_ab_initio_data(print_info=True, **kwargs):
     return pd.read_csv(DATA_DIR / material.label / "M.csv")
 
 
-def find_materials(**kwargs):
+def find_materials(**kwargs) -> pandas.DataFrame:
     """Find materials in database.
 
     This function retrieves one or known materials from the database
     `db.csv` by filtering for any requirements given in **kwargs.
 
-    :returns: Dataframe containing materials with requested qualities.
-        Possibly empty.
-    :rtype: pandas.DataFrame
+    Args:
+        **kwargs: Selection arguments
+
+    Returns:
+        Dataframe containing materials with requested qualities. Possibly empty.
+
     """
     df = pd.read_csv(
         DATA_DIR / "db.csv",
@@ -413,21 +441,24 @@ def find_materials(**kwargs):
     return df
 
 
-def describe_material(material=None, material_label=None):
+def describe_material(
+    material: pandas.DataFrame | None = None, material_label: str | None = None
+) -> str:
     """Describe material in a complete way.
 
     This function returns a string listing the properties of the given material
     or the given material label.
 
-    :param material: Material dataframe containing structure information.
-        Defaults to `None`.
-    :type material: pandas.core.frame.DataFrame
-    :param material_label: Label of material in local database.
-        Defaults to `None`.
-    :type material_label: str
-    :return: Well-formatted material information.
-    :rtype: str
-    :raise ValueError: Material and material label cannot be both empty.
+    Args:
+        material: Material dataframe containing structure information.
+        material_label: Label of material in local database.
+
+    Returns:
+        Description of the material.
+
+    Raises:
+        ValueError: If material and material label are both None.
+
     """
     if material is None and material_label is None:
         raise ValueError("Material and material label cannot be both empty.")
