@@ -118,8 +118,8 @@ def get_spontaneous_magnetisation(
 
     return MagnetisationData(
         table,
-        me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
-        me.Ms(table["M[A/m]"], unit=u.A / u.m),
+        me.Entity("ThermodynamicTemperature", value=table["T"]["[K]"], unit=u.K),
+        me.Ms(table["M"]["[A/m]"], unit=u.A / u.m),
     )
 
 
@@ -161,7 +161,7 @@ def load_uppasd_simulation(
     pos = parse_posfile(posfile)
     for ii in DATA_DIR.iterdir():
         if ii.is_dir() and check_input_files(ii, j, mom, pos):
-            table = pd.read_csv(ii / "M.csv")
+            table = pd.read_csv(ii / "M.csv", header=[0, 1])
             if print_info:
                 print("Found material in database.")
                 print(describe_material(material_label=ii.name))
@@ -398,7 +398,7 @@ def load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
     if print_info:
         print("Found material in database.")
         print(describe_material(material))
-    return pd.read_csv(DATA_DIR / material.label / "M.csv")
+    return pd.read_csv(DATA_DIR / material.label / "M.csv", header=[0, 1])
 
 
 def find_materials(**kwargs) -> pandas.DataFrame:
