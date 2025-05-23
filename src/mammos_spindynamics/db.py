@@ -117,9 +117,8 @@ def get_spontaneous_magnetisation(
         )
 
     return MagnetisationData(
-        table,
-        me.Entity("ThermodynamicTemperature", value=table["T"]["[K]"], unit=u.K),
-        me.Ms(table["M"]["[A/m]"], unit=u.A / u.m),
+        me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
+        me.Ms(table["M[A/m]"], unit=u.A / u.m),
     )
 
 
@@ -130,9 +129,18 @@ class MagnetisationData:
     Contains temperature and spontaneous magnetisation data.
     """
 
-    dataframe: pd.DataFrame
     T: me.Entity
     Ms: me.Entity
+
+    @property
+    def dataframe(self):
+        """Dataframe containing temperature and spontaneous magnetisation data."""
+        return pd.DataFrame(
+            {
+                "T": self.T,
+                "Ms": self.Ms,
+            }
+        )
 
 
 def load_uppasd_simulation(
@@ -398,7 +406,7 @@ def load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
     if print_info:
         print("Found material in database.")
         print(describe_material(material))
-    return pd.read_csv(DATA_DIR / material.label / "M.csv", header=[0, 1])
+    return pd.read_csv(DATA_DIR / material.label / "M.csv")
 
 
 def find_materials(**kwargs) -> pandas.DataFrame:
