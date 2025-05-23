@@ -1626,7 +1626,7 @@ packages:
 - pypi: ./
   name: mammos-spindynamics
   version: 0.1.6
-  sha256: fde85ce9fe7bd6e807938885b9a5b5b892a1ecc9679932946616f1bcf97e844d
+  sha256: aedebc272f32ca5570536731ae04628cf61c9bdc5e24b4f3f20c84475130555f
   requires_dist:
   - mammos-entity>=0.2.1
   - mammos-units
@@ -1637,7 +1637,7 @@ packages:
   - ruff==0.8 ; extra == 'format'
   - pytest==8.3 ; extra == 'test'
   - jupyter ; extra == 'examples'
-  requires_python: '>=3.8'
+  requires_python: '>=3.11'
   editable: true
 - pypi: https://files.pythonhosted.org/packages/7f/f3/1d8b9856ddacf665a912dc68ede415133051a71a2a2334e2f0c6a46675a7/mammos_units-0.2.2-py3-none-any.whl
   name: mammos-units
