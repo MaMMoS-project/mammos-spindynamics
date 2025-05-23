@@ -16,13 +16,8 @@ def test_Co2Fe2H4():
     test should load its table without issues.
     """
     magnetisation_data = get_spontaneous_magnetisation(chemical_formula="Co2Fe2H4")
-    assert np.allclose(
-        magnetisation_data.dataframe["T"]["[K]"], magnetisation_data.T.value
-    )
-    assert np.allclose(
-        magnetisation_data.dataframe["M"]["[A/m]"],
-        magnetisation_data.Ms.value,
-    )
+    assert np.allclose(magnetisation_data.T.value, magnetisation_data.dataframe["T"])
+    assert np.allclose(magnetisation_data.Ms.value, magnetisation_data.dataframe["Ms"])
 
 
 def test_NdFe14B():
