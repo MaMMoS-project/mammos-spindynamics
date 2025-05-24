@@ -5,7 +5,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "mammos-spindynamics"
-version = "0.1.7"
+version = "0.1.8"
 description = "Spin dynamics package."
 readme = "README.md"
 license = "MIT"
