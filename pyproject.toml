@@ -1,92 +1,84 @@
 [build-system]
-requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+requires = [ "hatchling" ]
 
 [project]
 name = "mammos-spindynamics"
-version = "0.1.6"
+version = "0.1.8"
 description = "Spin dynamics package."
 readme = "README.md"
-authors = [
-    {name = "Andrea Petrocchi", email = "andrea.petrocchi@mpsd.mpg.de"},
-    {name = "Swapneel Amit Pathak", email = "swapneel-amit.pathak@mpsd.mpg.de"},
-    {name = "Martin Lang", email = "martin.lang@mpsd.mpg.de"},
-]
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = [ "LICENSE" ]
 
+authors = [
+  { name = "Andrea Petrocchi", email = "andrea.petrocchi@mpsd.mpg.de" },
+  { name = "Swapneel Amit Pathak", email = "swapneel-amit.pathak@mpsd.mpg.de" },
+  { name = "Martin Lang", email = "martin.lang@mpsd.mpg.de" },
+  { name = "Sam Holt", email = "samjrholt@gmail.com" },
+  { name = "Hans Fangohr", email = "hans.fangohr@mpsd.mpg.de" },
+]
 requires-python = ">=3.11"
 
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 dependencies = [
-    "mammos_entity >=0.2.1",
-    "mammos_units",
-    "pandas",
-    "pydantic",
-    "matplotlib >=3.10.1,<4",
-    "rich",
+  "mammos-entity>=0.2.1",
+  "mammos-units",
+  "matplotlib>=3.10.1,<4",
+  "pandas",
+  "pydantic",
+  "rich",
 ]
 
-[project.urls]
-Homepage = "https://mammos-project.github.io"
-Documentation = "https://mammos-project.github.io/mammos"
-Repository = "https://github.com/MaMMoS-project/mammos-spindynamics"
-Issues = "https://github.com/MaMMoS-project/mammos-spindynamics/issues"
-Changelog = "https://mammos-project.github.io/mammos/changelog"
+urls.Changelog = "https://mammos-project.github.io/mammos/changelog"
+urls.Documentation = "https://mammos-project.github.io/mammos"
+urls.Homepage = "https://mammos-project.github.io"
+urls.Issues = "https://github.com/MaMMoS-project/mammos-spindynamics/issues"
+urls.Repository = "https://github.com/MaMMoS-project/mammos-spindynamics"
 
-[project.optional-dependencies]
-format = [
-    "ruff==0.8",
-]
-test = [
-    "pytest==8.3",
-]
-examples = [
-    "jupyter"
-]
-
-# pixi
-[tool.pixi.project]
-channels = ["conda-forge"]
-platforms = ["linux-64"]
-
-[tool.pixi.pypi-dependencies]
-mammos-spindynamics = { path = ".", editable = true }
-
-[tool.pixi.environments]
-default = { solve-group = "default" }
-format = { features = ["format"], solve-group = "default" }
-test = { features = ["test"], solve-group = "default" }
-examples = { features = ["examples"], solve-group = "default" }
-
-[tool.pixi.tasks]
-clean = "rm -rf .ruff_cache .pytest_cache"
-
-[tool.pixi.feature.format.tasks]
-format = "ruff format"
-lint = "ruff check"
-
-[tool.pixi.feature.test.tasks]
-test = "pytest -v"
-
-[tool.pixi.feature.examples.tasks]
-examples = "jupyter-lab examples"
-
-# ruff
 [tool.ruff]
 target-version = "py39"
 line-length = 88
 indent-width = 4
 respect-gitignore = true
 
-[tool.ruff.lint]
-select = ["D", "E4", "E7", "E9", "F", "W"] # default rules + pydocstyle + pycodestyle
-ignore = []
+format.quote-style = "double"
+lint.select = [ "D", "E4", "E7", "E9", "F", "W" ] # default rules + pydocstyle + pycodestyle
+lint.ignore = [  ]
+lint.pycodestyle.max-doc-length = 88
+lint.pydocstyle.convention = "google"
 
-[tool.ruff.lint.pycodestyle]
-max-doc-length = 88
+[tool.pixi.project]
+channels = [ "conda-forge" ]
+platforms = [ "osx-arm64", "linux-64", "osx-64", "win-64" ]
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+[tool.pixi.pypi-dependencies]
+mammos-spindynamics = { path = ".", editable = true }
 
-[tool.ruff.format]
-quote-style = "double"
+[tool.pixi.feature.dev.dependencies]
+packaging = "<25" # HACK: to make emmontopy happy
+git = "*"
+hatch = "*"
+pre-commit = "*"
+jupyter = "*"
+ruff = "*"
+pytest = "*"
+
+[tool.pixi.environments]
+dev = { features = [ "dev" ], solve-group = "default" }
+
+[tool.pixi.feature.dev.tasks]
+clean = "rm -rf .ruff_cache .pytest_cache"
+format = "ruff format"
+lint = "ruff check"
+test = "pytest -v"
+examples = "jupyter-lab examples"
+build = "hatch build"
+tag-version = "git tag -s -a $(hatch version)"
+install-precommits = "pre-commit install"
+run-precommits = { cmd = [ "pre-commit", "run", "--all-files" ], depends-on = [ "install-precommits" ] }
