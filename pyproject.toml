@@ -35,19 +35,6 @@ dependencies = [
   "rich",
 ]
 
-optional-dependencies.build = [
-  "hatch",
-  "pre-commit",
-]
-optional-dependencies.examples = [
-  "jupyter",
-]
-optional-dependencies.format = [
-  "ruff==0.8",
-]
-optional-dependencies.test = [
-  "pytest==8.3",
-]
 urls.Changelog = "https://mammos-project.github.io/mammos/changelog"
 urls.Documentation = "https://mammos-project.github.io/mammos"
 urls.Homepage = "https://mammos-project.github.io"
@@ -73,31 +60,25 @@ platforms = [ "osx-arm64", "linux-64", "osx-64", "win-64" ]
 [tool.pixi.pypi-dependencies]
 mammos-spindynamics = { path = ".", editable = true }
 
-[tool.pixi.feature.build.dependencies]
+[tool.pixi.feature.dev.dependencies]
+packaging = "<25" # HACK: to make emmontopy happy
 git = "*"
+hatch = "*"
+pre-commit = "*"
+jupyter = "*"
+ruff = "*"
+pytest = "*"
 
 [tool.pixi.environments]
-default = { solve-group = "default" }
-format = { features = [ "format" ], solve-group = "default" }
-test = { features = [ "test" ], solve-group = "default" }
-examples = { features = [ "examples" ], solve-group = "default" }
-build = { features = [ "build" ], solve-group = "default" }
+dev = { features = [ "dev" ], solve-group = "default" }
 
-[tool.pixi.tasks]
+[tool.pixi.feature.dev.tasks]
 clean = "rm -rf .ruff_cache .pytest_cache"
-
-[tool.pixi.feature.format.tasks]
 format = "ruff format"
 lint = "ruff check"
-
-[tool.pixi.feature.test.tasks]
 test = "pytest -v"
-
-[tool.pixi.feature.examples.tasks]
 examples = "jupyter-lab examples"
-
-[tool.pixi.feature.build.tasks]
 build = "hatch build"
-target-version = "git tag -s -a $(hatch version)"
+tag-version = "git tag -s -a $(hatch version)"
 install-precommits = "pre-commit install"
 run-precommits = { cmd = [ "pre-commit", "run", "--all-files" ], depends-on = [ "install-precommits" ] }
