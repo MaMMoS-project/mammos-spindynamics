@@ -1,17 +1,24 @@
 """Functions for reading tables."""
 
 from __future__ import annotations
-import numpy as np
-import pandas
-import pandas as pd
+
 import pathlib
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
-from rich import print
+import re
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 import mammos_entity as me
 import mammos_units as u
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas
+import pandas as pd
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
+from rich import print
+
+if TYPE_CHECKING:
+    import matplotlib
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
@@ -141,6 +148,21 @@ class MagnetisationData:
                 "Ms": self.Ms,
             }
         )
+
+    def plot(self, axes: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
+        """Plot the spontaneous magnetisation data-points."""
+        if not axes:
+            _, axes = plt.subplots()
+        self.dataframe.plot(x="T", linestyle="", marker="x", ax=axes)
+        axes.set_xlabel(
+            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.T.ontology_label}")
+            + f" {self.T.unit}"
+        )
+        axes.set_ylabel(
+            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.Ms.ontology_label}")
+            + f" {self.Ms.unit}"
+        )
+        return axes
 
 
 def load_uppasd_simulation(
