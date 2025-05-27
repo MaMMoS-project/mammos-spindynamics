@@ -149,20 +149,20 @@ class MagnetisationData:
             }
         )
 
-    def plot(self, axes: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
+    def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
         """Plot the spontaneous magnetisation data-points."""
-        if not axes:
-            _, axes = plt.subplots()
-        axes = self.dataframe.plot(x="T", linestyle="", marker="x", ax=axes)
-        axes.set_xlabel(
+        if not ax:
+            _, ax = plt.subplots()
+        ax = self.dataframe.plot(x="T", linestyle="", marker="x", ax=ax)
+        ax.set_xlabel(
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.T.ontology_label}")
             + f" [{self.T.unit}]"
         )
-        axes.set_ylabel(
+        ax.set_ylabel(
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.Ms.ontology_label}")
             + f" [{self.Ms.unit}]"
         )
-        return axes
+        return ax
 
 
 def load_uppasd_simulation(
