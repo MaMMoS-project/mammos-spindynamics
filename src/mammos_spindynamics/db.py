@@ -156,11 +156,11 @@ class MagnetisationData:
         axes = self.dataframe.plot(x="T", linestyle="", marker="x", ax=axes)
         axes.set_xlabel(
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.T.ontology_label}")
-            + f" {self.T.unit}"
+            + f" [{self.T.unit}]"
         )
         axes.set_ylabel(
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.Ms.ontology_label}")
-            + f" {self.Ms.unit}"
+            + f" [{self.Ms.unit}]"
         )
         return axes
 
