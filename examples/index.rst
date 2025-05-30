@@ -1,5 +1,5 @@
-MaMMoS spindynamics examples
-============================
+mammos-spindynamics
+===================
 
 .. toctree::
    :maxdepth: 1
