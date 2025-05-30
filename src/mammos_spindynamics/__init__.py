@@ -1,7 +1,3 @@
 """Package mammos-spindynamics."""
 
-from mammos_spindynamics import db
-
-__all__ = [
-    "db",
-]
+from mammos_spindynamics import db as db

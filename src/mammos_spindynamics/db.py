@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
 
-def check_short_label(short_label: str) -> str | int:
+def _check_short_label(short_label: str) -> str | int:
     """Check that short label follows the standards and returns material parameters.
 
     Args:
@@ -52,7 +52,7 @@ def check_short_label(short_label: str) -> str | int:
     return chemical_formula, space_group_number
 
 
-def get_spontaneous_magnetisation(
+def get_spontaneous_magnetization(
     chemical_formula: str | None = None,
     space_group_name: str | None = None,
     space_group_number: int | None = None,
@@ -69,7 +69,7 @@ def get_spontaneous_magnetisation(
     momfile=None,
     posfile=None,
     print_info: bool = False,
-) -> MagnetisationData:
+) -> MagnetizationData:
     """Get spontaneous magnetization interpolator from a database.
 
     This function retrieves the temperature-dependent spontaneous magnetization
@@ -99,11 +99,11 @@ def get_spontaneous_magnetisation(
 
     """
     if posfile is not None:
-        table = load_uppasd_simulation(
+        table = _load_uppasd_simulation(
             jfile=jfile, momfile=momfile, posfile=posfile, print_info=print_info
         )
     else:
-        table = load_ab_initio_data(
+        table = _load_ab_initio_data(
             print_info=print_info,
             chemical_formula=chemical_formula,
             space_group_name=space_group_name,
@@ -119,17 +119,17 @@ def get_spontaneous_magnetisation(
             OQMD_label=OQMD_label,
         )
 
-    return MagnetisationData(
+    return MagnetizationData(
         me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
         me.Ms(table["M[A/m]"], unit=u.A / u.m),
     )
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class MagnetisationData:
-    """Magnetisation data.
+class MagnetizationData:
+    """Magnetization data.
 
-    Contains temperature and spontaneous magnetisation data.
+    Contains temperature and spontaneous magnetization data.
     """
 
     T: me.Entity
@@ -137,7 +137,7 @@ class MagnetisationData:
 
     @property
     def dataframe(self):
-        """Dataframe containing temperature and spontaneous magnetisation data."""
+        """Dataframe containing temperature and spontaneous magnetization data."""
         return pd.DataFrame(
             {
                 "T": self.T,
@@ -146,7 +146,7 @@ class MagnetisationData:
         )
 
     def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
-        """Plot the spontaneous magnetisation data-points."""
+        """Plot the spontaneous magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
         ax = self.dataframe.plot(x="T", linestyle="", marker="x", ax=ax)
@@ -161,7 +161,7 @@ class MagnetisationData:
         return ax
 
 
-def load_uppasd_simulation(
+def _load_uppasd_simulation(
     jfile: str | pathlib.Path,
     momfile: str | pathlib.Path,
     posfile: str | pathlib.Path,
@@ -182,20 +182,20 @@ def load_uppasd_simulation(
         LookupError: Simulation not found in database.
 
     """
-    j = parse_jfile(jfile)
-    mom = parse_momfile(momfile)
-    pos = parse_posfile(posfile)
+    j = _parse_jfile(jfile)
+    mom = _parse_momfile(momfile)
+    pos = _parse_posfile(posfile)
     for ii in DATA_DIR.iterdir():
-        if ii.is_dir() and check_input_files(ii, j, mom, pos):
+        if ii.is_dir() and _check_input_files(ii, j, mom, pos):
             table = pd.read_csv(ii / "M.csv", header=[0, 1])
             if print_info:
                 print("Found material in database.")
-                print(describe_material(material_label=ii.name))
+                print(_describe_material(material_label=ii.name))
             return table
     raise LookupError("Requested simulation not found in database.")
 
 
-def parse_jfile(jfile: str | pathlib.Path) -> pandas.DataFrame:
+def _parse_jfile(jfile: str | pathlib.Path) -> pandas.DataFrame:
     """Parse jfile, input for UppASD.
 
     See https://uppasd.github.io/UppASD-manual/input/#exchange
@@ -243,7 +243,7 @@ def parse_jfile(jfile: str | pathlib.Path) -> pandas.DataFrame:
         ) from None
 
 
-def parse_momfile(momfile: str | pathlib.Path) -> dict:
+def _parse_momfile(momfile: str | pathlib.Path) -> dict:
     """Parse momfile, input for UppASD.
 
     See https://uppasd.github.io/UppASD-manual/input/#momfile
@@ -283,7 +283,7 @@ def parse_momfile(momfile: str | pathlib.Path) -> dict:
         ) from None
 
 
-def parse_posfile(posfile: str | pathlib.Path) -> dict:
+def _parse_posfile(posfile: str | pathlib.Path) -> dict:
     """Parse posfile, input for UppASD.
 
     See https://uppasd.github.io/UppASD-manual/input/#posfile
@@ -322,7 +322,7 @@ def parse_posfile(posfile: str | pathlib.Path) -> dict:
         ) from None
 
 
-def check_input_files(
+def _check_input_files(
     dir_i: pathlib.Path, j: pandas.DataFrame, mom: dict, pos: dict
 ) -> bool:
     """Check if UppASD inputs are equivalent to the ones in directory `dir_i`.
@@ -349,7 +349,7 @@ def check_input_files(
         return False
 
     if (dir_i / "jfile").is_file():
-        j_i = parse_jfile(dir_i / "jfile")
+        j_i = _parse_jfile(dir_i / "jfile")
         if not j_i.drop("exchange_energy[mRy]", axis=1).equals(
             j.drop("exchange_energy[mRy]", axis=1)
         ):
@@ -361,7 +361,7 @@ def check_input_files(
             return False
 
     if (dir_i / "momfile").is_file():
-        mom_i = parse_momfile(dir_i / "momfile")
+        mom_i = _parse_momfile(dir_i / "momfile")
         if len(mom_i) != len(mom):
             return False
         for index, site in mom_i.items():
@@ -379,7 +379,7 @@ def check_input_files(
                 return False
 
     if (dir_i / "posfile").is_file():
-        pos_i = parse_posfile(dir_i / "posfile")
+        pos_i = _parse_posfile(dir_i / "posfile")
         if len(pos_i) != len(pos):
             return False
         for index, atom in pos_i.items():
@@ -392,7 +392,7 @@ def check_input_files(
     return True
 
 
-def load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
+def _load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
     """Load material with given structure information.
 
     Args:
@@ -407,7 +407,7 @@ def load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
         LookupError: Too many results found with this formula.
 
     """
-    df = find_materials(**kwargs)
+    df = _find_materials(**kwargs)
     num_results = len(df)
     if num_results == 0:
         raise LookupError("Requested material not found in database.")
@@ -417,17 +417,17 @@ def load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame:
             + "Avilable materials based on request:\n"
         )
         for row, material in df.iterrows():
-            error_string += describe_material(material)
+            error_string += _describe_material(material)
         raise LookupError(error_string)
 
     material = df.iloc[0]
     if print_info:
         print("Found material in database.")
-        print(describe_material(material))
+        print(_describe_material(material))
     return pd.read_csv(DATA_DIR / material.label / "M.csv")
 
 
-def find_materials(**kwargs) -> pandas.DataFrame:
+def _find_materials(**kwargs) -> pandas.DataFrame:
     """Find materials in database.
 
     This function retrieves one or known materials from the database
@@ -467,7 +467,7 @@ def find_materials(**kwargs) -> pandas.DataFrame:
     return df
 
 
-def describe_material(
+def _describe_material(
     material: pandas.DataFrame | None = None, material_label: str | None = None
 ) -> str:
     """Describe material in a complete way.
@@ -489,7 +489,7 @@ def describe_material(
     if material is None and material_label is None:
         raise ValueError("Material and material label cannot be both empty.")
     if material_label is not None:
-        df = find_materials()
+        df = _find_materials()
         material = df[df["label"] == material_label].iloc[0]
     return dedent(
         f"""
