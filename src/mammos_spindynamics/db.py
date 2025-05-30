@@ -53,7 +53,6 @@ def check_short_label(short_label: str) -> str | int:
 
 
 def get_spontaneous_magnetisation(
-    short_label: str | None = None,
     chemical_formula: str | None = None,
     space_group_name: str | None = None,
     space_group_number: int | None = None,
@@ -78,7 +77,6 @@ def get_spontaneous_magnetisation(
     Data is retrieved by querying material information or UppASD input files.
 
     Args:
-        short_label: short label
         chemical_formula: Chemical formula
         space_group_name: Space group name
         space_group_number: Space group number
@@ -105,8 +103,6 @@ def get_spontaneous_magnetisation(
             jfile=jfile, momfile=momfile, posfile=posfile, print_info=print_info
         )
     else:
-        if short_label is not None:
-            chemical_formula, space_group_number = check_short_label(short_label)
         table = load_ab_initio_data(
             print_info=print_info,
             chemical_formula=chemical_formula,
