@@ -145,11 +145,14 @@ class MagnetizationData:
             }
         )
 
-    def plot(self, ax: matplotlib.axes.Axes | None = None) -> matplotlib.axes.Axes:
+    def plot(
+        self, ax: matplotlib.axes.Axes | None = None, **kwargs
+    ) -> matplotlib.axes.Axes:
         """Plot the spontaneous magnetization data-points."""
         if not ax:
             _, ax = plt.subplots()
-        ax = self.dataframe.plot(x="T", linestyle="", marker="x", ax=ax)
+        kwargs.setdefault("marker", "x")
+        ax.plot(self.T.value, self.Ms.value, linestyle="", **kwargs)
         ax.set_xlabel(
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.T.ontology_label}")
             + f" [{self.T.unit}]"
@@ -158,6 +161,8 @@ class MagnetizationData:
             re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.Ms.ontology_label}")
             + f" [{self.Ms.unit}]"
         )
+        if "label" in kwargs:
+            ax.legend()
         return ax
 
 
@@ -407,7 +412,7 @@ def _load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame
         LookupError: Too many results found with this formula.
 
     """
-    df = _find_materials(**kwargs)
+    df = find_materials(**kwargs)
     num_results = len(df)
     if num_results == 0:
         raise LookupError("Requested material not found in database.")
@@ -427,7 +432,7 @@ def _load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame
     return pd.read_csv(DATA_DIR / material.label / "M.csv")
 
 
-def _find_materials(**kwargs) -> pandas.DataFrame:
+def find_materials(**kwargs) -> pandas.DataFrame:
     """Find materials in database.
 
     This function retrieves one or known materials from the database
@@ -489,7 +494,7 @@ def _describe_material(
     if material is None and material_label is None:
         raise ValueError("Material and material label cannot be both empty.")
     if material_label is not None:
-        df = _find_materials()
+        df = find_materials()
         material = df[df["label"] == material_label].iloc[0]
     return dedent(
         f"""
