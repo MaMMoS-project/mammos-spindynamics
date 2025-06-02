@@ -4,7 +4,7 @@ import numpy as np
 import pathlib
 import pytest
 
-from mammos_spindynamics.db import get_spontaneous_magnetisation
+from mammos_spindynamics.db import get_spontaneous_magnetization
 
 DATA_DIR = pathlib.Path(__file__).parent.resolve() / "data"
 
@@ -15,9 +15,9 @@ def test_Co2Fe2H4():
     There is only one material with formula `Co2Fe2H4`, so this
     test should load its table without issues.
     """
-    magnetisation_data = get_spontaneous_magnetisation(chemical_formula="Co2Fe2H4")
-    assert np.allclose(magnetisation_data.T.value, magnetisation_data.dataframe["T"])
-    assert np.allclose(magnetisation_data.Ms.value, magnetisation_data.dataframe["Ms"])
+    magnetization_data = get_spontaneous_magnetization(chemical_formula="Co2Fe2H4")
+    assert np.allclose(magnetization_data.T.value, magnetization_data.dataframe["T"])
+    assert np.allclose(magnetization_data.Ms.value, magnetization_data.dataframe["Ms"])
 
 
 def test_NdFe14B():
@@ -27,7 +27,7 @@ def test_NdFe14B():
     so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_spontaneous_magnetisation(chemical_formula="NdFe14B")
+        get_spontaneous_magnetization(chemical_formula="NdFe14B")
 
 
 def test_Co2Fe2H4_11():
@@ -37,7 +37,7 @@ def test_Co2Fe2H4_11():
     in the database, so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_spontaneous_magnetisation(
+        get_spontaneous_magnetization(
             chemical_formula="Co2Fe2H4", space_group_number=11
         )
 
@@ -49,4 +49,4 @@ def test_all():
     so we expect a `LookupError`.
     """
     with pytest.raises(LookupError):
-        get_spontaneous_magnetisation()
+        get_spontaneous_magnetization()
