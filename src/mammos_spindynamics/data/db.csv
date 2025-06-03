@@ -1,6 +1,6 @@
-chemical_formula,space_group_name,space_group_number,cell_length_a,cell_length_b,cell_length_c,cell_angle_alpha,cell_angle_beta,cell_angle_gamma,cell_volume,ICSD_label,OQMD_label,label
-Co2Fe2H4,P6_3/mmc,194,2.645345 AA,2.645314 AA,8.539476 AA,90 deg,90 deg,120 deg,51.751119 AA^3,,,0001
-Y2Ti4Fe18,P4/mbm,127,8.186244 AA,8.186244 AA,4.892896 AA,90 deg,90 deg,90 deg,327.8954234 AA^3,,,0002
-Nd2Fe14B,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,,0003
-Ni80Fe20,Fm −3 m,225,3.55 AA,3.55 AA,3.55 AA,90 deg,90 deg,90 deg,44.738 AA^3,,,0004
-Fe16N2,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,,0005
+chemical_formula,space_group_name,space_group_number,cell_length_a,cell_length_b,cell_length_c,cell_angle_alpha,cell_angle_beta,cell_angle_gamma,cell_volume,ICSD_label,OQMD_label,label,source
+Co2Fe2H4,P6_3/mmc,194,2.645345 AA,2.645314 AA,8.539476 AA,90 deg,90 deg,120 deg,51.751119 AA^3,,,0001,Uppsala
+Y2Ti4Fe18,P4/mbm,127,8.186244 AA,8.186244 AA,4.892896 AA,90 deg,90 deg,90 deg,327.8954234 AA^3,,,0002,Uppsala
+Nd2Fe14B,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,,0003,https://doi.org/10.1103/PhysRevB.99.214409
+Ni80Fe20,Fm −3 m,225,3.55 AA,3.55 AA,3.55 AA,90 deg,90 deg,90 deg,44.738 AA^3,,,0004,https://doi.org/10.48550/arXiv.1908.08885
+Fe16N2,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,,0005,Uppsala
