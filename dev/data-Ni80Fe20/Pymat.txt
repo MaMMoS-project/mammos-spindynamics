@@ -1,0 +1,43 @@
+#===================================================
+# Sample vampire material file V3+
+#===================================================
+
+#---------------------------------------------------
+# Number of Materials
+#---------------------------------------------------
+material:num-materials=2
+#---------------------------------------------------
+# Material 1 Py Ni
+#---------------------------------------------------
+material[1]:material-name=Ni
+material[1]:damping-constant=1.0 # 0.0064
+material[1]:exchange-matrix[1]=3.78e-21
+material[1]:exchange-matrix[2]=3.78e-21
+material[1]:exchange-matrix[3]=0.0e-21
+material[1]:atomic-spin-moment=0.62 !muB
+material[1]:uniaxial-anisotropy-constant=0.0
+material[1]:cubic-anisotropy-constant=3.355e-26
+material[1]:material-element=Ag
+material[1]:minimum-height=0.0
+material[1]:maximum-height=1.0
+material[1]:alloy-host
+material[1]:alloy-fraction[2]=0.2
+material[1]:initial-spin-direction = 0,0,1
+material[1]:temperature-rescaling-exponent=1.63
+material[1]:temperature-rescaling-curie-temperature=865.0
+#---------------------------------------------------
+# Material 2 Py Fe
+#---------------------------------------------------
+material[2]:material-name=Fe
+material[2]:damping-constant=1.0 # 0.0064
+material[2]:exchange-matrix[1]=3.78e-21
+material[2]:exchange-matrix[2]=3.78e-21
+material[2]:exchange-matrix[3]=0.0e-21
+material[2]:atomic-spin-moment=2.9 !muB
+material[2]:cubic-anisotropy-constant=3.355e-26
+material[2]:uniaxial-anisotropy-constant=0.0
+material[2]:material-element=Fe
+material[2]:minimum-height=0.0
+material[2]:maximum-height=0.0
+material[2]:temperature-rescaling-exponent=1.63
+material[2]:temperature-rescaling-curie-temperature=865.0

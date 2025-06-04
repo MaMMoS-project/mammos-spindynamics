@@ -1,0 +1,28 @@
+#!/bin/bash
+# Automated plotting file for M vs T for gnuplot
+load "/PATH/nature.style"
+load "/PATH/BlueGoldSL.style"
+set xlabel "Temperature (K)"
+#set ylabel "Magnetisation ({/GillSans-LightItalic m}/{/GillSans-LightItalic m}_s)" offset 0.5,0
+set ylabel "Magnetisation ({/Helvetica-Oblique m}/{/Helvetica-Oblique m}_s)" offset 0.5,0
+set format y "%3.1f"
+set output "MvsT.eps"
+set xzeroaxis
+set key top right maxrows 5 spacing 1.2
+#Tc1=560.0
+#beta1=0.365
+#M1(T)=T <Tc1 ? (1.0-T/Tc1)**beta1 : 0.0
+#fit [0:550] M1(x) "output" u 2:6 via Tc1, beta1
+#Tc2=560.0
+#beta2=0.365
+#M2(T)=T<Tc2 ? (1.0-T/Tc2)**beta2 : 0.0
+#fit [0:550] M2(x) "output" u 2:16 via Tc2, beta2
+
+set samples 1000
+#--------------------------------------------
+
+p [-30:1030][-0.05:1.05] \
+"output" u 2:6 ev 1 ls 1 w l title "Fe",\
+"output" u 2:10 ev 1 ls 2 w p title "Ni"
+sys "pstopdf MvsT.eps"
+

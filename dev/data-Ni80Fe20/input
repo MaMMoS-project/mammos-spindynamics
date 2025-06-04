@@ -1,0 +1,55 @@
+#------------------------------------------
+# Vampire input file to calculate Ms(T) for 
+# Permalloy
+#
+# (c) R F L Evans 2019
+#
+#------------------------------------------
+
+#------------------------------------------
+# Creation attributes:
+#------------------------------------------
+create:crystal-structure=fcc
+create:periodic-boundaries-x
+create:periodic-boundaries-y
+create:periodic-boundaries-z
+#------------------------------------------
+# System Dimensions:
+#------------------------------------------
+dimensions:unit-cell-size = 3.55 !A
+dimensions:system-size-x = 10.0 !nm
+dimensions:system-size-y = 10.0 !nm
+dimensions:system-size-z = 10.0 !nm
+dimensions:particle-size = 10 !nm
+#------------------------------------------
+# Material Files:
+#------------------------------------------
+material:file=Py.mat
+
+#------------------------------------------
+# Simulation attributes:
+#------------------------------------------
+sim:minimum-temperature = 0
+sim:maximum-temperature = 1000
+sim:temperature-increment = 10
+sim:time-steps-increment=1
+sim:equilibration-time-steps=5000
+sim:loop-time-steps = 15000
+
+#------------------------------------------
+# Program and integrator details
+#------------------------------------------
+sim:program=curie-temperature
+sim:integrator=monte-carlo
+
+#------------------------------------------
+# data output
+#------------------------------------------
+output:real-time
+output:temperature
+output:material-magnetisation
+output:material-mean-magnetisation-length
+output:mean-susceptibility
+output:material-mean-susceptibility
+output:mean-specific-heat
+output:material-mean-specific-heat
