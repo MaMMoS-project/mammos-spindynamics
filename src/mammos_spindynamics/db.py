@@ -469,6 +469,7 @@ def find_materials(**kwargs) -> pandas.DataFrame:
             "OQMD_label": str,
             "label": str,
         },
+        comment="#",
     )
     for key, value in kwargs.items():
         if value is not None:
