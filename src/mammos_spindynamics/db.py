@@ -138,7 +138,9 @@ class MagnetizationData:
     """
 
     T: me.Entity
+    """Array of temperatures."""
     Ms: me.Entity
+    """Array of spontaneous magnetizations for the different temperatures."""
 
     @property
     def dataframe(self):
@@ -441,10 +443,10 @@ def find_materials(**kwargs) -> pandas.DataFrame:
     """Find materials in database.
 
     This function retrieves one or known materials from the database
-    `db.csv` by filtering for any requirements given in **kwargs.
+    `db.csv` by filtering for any requirements given in `kwargs`.
 
     Args:
-        **kwargs: Selection arguments
+        kwargs: Selection arguments
 
     Returns:
         Dataframe containing materials with requested qualities. Possibly empty.
