@@ -97,6 +97,11 @@ def get_spontaneous_magnetization(
     Returns:
         Interpolator function based on available data.
 
+    Examples:
+        >>> import mammos_spindynamics.db
+        >>> mammos_spindynamics.db.get_spontaneous_magnetization("Nd2Fe14B")
+        MagnetizationData(T=..., Ms=...)
+
     """
     if posfile is not None:
         table = _load_uppasd_simulation(
@@ -421,7 +426,7 @@ def _load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame
             "Too many results. Please refine your search.\n"
             + "Avilable materials based on request:\n"
         )
-        for row, material in df.iterrows():
+        for _row, material in df.iterrows():
             error_string += _describe_material(material)
         raise LookupError(error_string)
 

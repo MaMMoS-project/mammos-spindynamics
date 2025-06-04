@@ -1,7 +1,8 @@
 """Test db lookup."""
 
-import numpy as np
 import pathlib
+
+import numpy as np
 import pytest
 
 from mammos_spindynamics.db import get_spontaneous_magnetization
