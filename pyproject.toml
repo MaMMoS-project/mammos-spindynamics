@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mammos-spindynamics"
-version = "0.1.8"
+version = "0.2.0"
 description = "Spin dynamics package."
 readme = "README.md"
 authors = [
@@ -25,9 +25,9 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-  "mammos-entity>=0.2.1",
+  "mammos-entity>=0.5.0",
   "mammos-units",
-  "matplotlib>=3.10.1,<4",
+  "matplotlib>=3.10.1",
   "pandas",
   "pydantic",
   "rich",
