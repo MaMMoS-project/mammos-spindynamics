@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pathlib
-import re
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -160,14 +159,8 @@ class MagnetizationData:
             _, ax = plt.subplots()
         kwargs.setdefault("marker", "x")
         ax.plot(self.T.value, self.Ms.value, linestyle="", **kwargs)
-        ax.set_xlabel(
-            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.T.ontology_label}")
-            + f" [{self.T.unit}]"
-        )
-        ax.set_ylabel(
-            re.sub(r"(?<!^)(?=[A-Z])", " ", f"{self.Ms.ontology_label}")
-            + f" [{self.Ms.unit}]"
-        )
+        ax.set_xlabel(self.T.axis_label)
+        ax.set_ylabel(self.Ms.axis_label)
         if "label" in kwargs:
             ax.legend()
         return ax
