@@ -146,8 +146,8 @@ class MagnetizationData:
         """Dataframe containing temperature and spontaneous magnetization data."""
         return pd.DataFrame(
             {
-                "T": self.T,
-                "Ms": self.Ms,
+                "T": self.T.value,
+                "Ms": self.Ms.value,
             }
         )
 
