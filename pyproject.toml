@@ -8,11 +8,11 @@ version = "0.2.1"
 description = "Spin dynamics package."
 readme = "README.md"
 authors = [
-  { name = "Andrea Petrocchi", email = "andrea.petrocchi@mpsd.mpg.de" },
-  { name = "Swapneel Amit Pathak", email = "swapneel-amit.pathak@mpsd.mpg.de" },
-  { name = "Martin Lang", email = "martin.lang@mpsd.mpg.de" },
-  { name = "Sam Holt", email = "samjrholt@gmail.com" },
-  { name = "Hans Fangohr", email = "hans.fangohr@mpsd.mpg.de" },
+  { name = "Andrea Petrocchi" },
+  { name = "Swapneel Amit Pathak" },
+  { name = "Martin Lang" },
+  { name = "Sam Holt" },
+  { name = "Hans Fangohr" },
 ]
 license = "MIT"
 license-files = ["LICENSE"]
