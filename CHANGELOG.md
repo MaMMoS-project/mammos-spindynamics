@@ -6,4 +6,8 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.2.3](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.3) – 2025-08-12
 
+### Misc
+
+- Use [towncrier](https://towncrier.readthedocs.io) to generate changelog from fragments. Each new PR must include a changelog fragment. ([#21](https://github.com/MaMMoS-project/mammos-spindynamics/pull/21))

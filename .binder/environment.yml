@@ -5,4 +5,4 @@ dependencies:
   - python=3.11
   - pip
   - pip:
-      - mammos-spindynamics==0.2.2
+      - mammos-spindynamics==0.2.3
