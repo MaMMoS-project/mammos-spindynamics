@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import datetime
 import fnmatch
+import json
 import pathlib
 import shutil
 import subprocess
 from io import StringIO
 from typing import TYPE_CHECKING, Any
 
-import json
 import mammos_entity as me
-import mammos_spindynamics
 import mammos_units as u
 import numpy as np
 import pandas as pd
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
+
+import mammos_spindynamics
 
 if TYPE_CHECKING:
     import pandas
@@ -136,9 +137,18 @@ class Simulation:
         if T is None:
             T = self.get_T_from_inpsd
         outdir = pathlib.Path(outdir)
-        run_idx = 0 if not (outdir / "run_0").is_dir() else max(
-            [int(i.name.lstrip("run_")) for i in outdir.iterdir() if fnmatch.fnmatch(i.name, "run_[0-9]")]
-        ) + 1
+        run_idx = (
+            0
+            if not (outdir / "run_0").is_dir()
+            else max(
+                [
+                    int(i.name.lstrip("run_"))
+                    for i in outdir.iterdir()
+                    if fnmatch.fnmatch(i.name, "run_[0-9]")
+                ]
+            )
+            + 1
+        )
         run_dir = pathlib.Path(outdir) / f"run_{run_idx}"
         run_dir.mkdir(exist_ok=True, parents=True)
         shutil.copy(self.jfile, run_dir)
@@ -146,9 +156,17 @@ class Simulation:
         shutil.copy(self.posfile, run_dir)
         with open(run_dir / "inpsd.dat", "w", encoding="utf-8") as f:
             f.writelines(_parse_inpsd_lines(self.inpsd, temp=str(T), **kwargs))
-        t_start = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        t_start = (
+            datetime.datetime.now(datetime.UTC)
+            .astimezone()
+            .isoformat(timespec="seconds")
+        )
         _execute_UppASD_in_path(run_dir)
-        t_end = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        t_end = (
+            datetime.datetime.now(datetime.UTC)
+            .astimezone()
+            .isoformat(timespec="seconds")
+        )
         with open(run_dir / "info.json", "w") as f:
             json.dump(
                 {
@@ -188,19 +206,36 @@ class Simulation:
 
         """
         outdir = pathlib.Path(outdir)
-        run_idx = 0 if not (outdir / "run_temparray_0").is_dir() else max(
-            [int(i.name.lstrip("run_temparray_")) for i in outdir.iterdir() if fnmatch.fnmatch(i.name, "run_temparray_[0-9]")]
-        ) + 1
+        run_idx = (
+            0
+            if not (outdir / "run_temparray_0").is_dir()
+            else max(
+                [
+                    int(i.name.lstrip("run_temparray_"))
+                    for i in outdir.iterdir()
+                    if fnmatch.fnmatch(i.name, "run_temparray_[0-9]")
+                ]
+            )
+            + 1
+        )
         run_temparray_dir = pathlib.Path(outdir) / f"run_temparray_{run_idx}"
         run_temparray_dir.mkdir(exist_ok=True, parents=True)
-        t_start = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        t_start = (
+            datetime.datetime.now(datetime.UTC)
+            .astimezone()
+            .isoformat(timespec="seconds")
+        )
         for T in T_array:
             self.run(
                 T=T,
                 outdir=run_temparray_dir,
                 **kwargs,
             )
-        t_end = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        t_end = (
+            datetime.datetime.now(datetime.UTC)
+            .astimezone()
+            .isoformat(timespec="seconds")
+        )
         with open(run_temparray_dir / "info.json", "w") as f:
             json.dump(
                 {
@@ -272,7 +307,9 @@ class ResultCollection:
         self.outdir = pathlib.Path(outdir)
         runs = []
         for d_ in self.outdir.iterdir():
-            if fnmatch.fnmatch(d_.name, "run_[0-9]*") or fnmatch.fnmatch(d_.name, "run_temparray_[0-9]*"):
+            if fnmatch.fnmatch(d_.name, "run_[0-9]*") or fnmatch.fnmatch(
+                d_.name, "run_temparray_[0-9]*"
+            ):
                 with open(d_ / "info.json") as f:
                     info = json.load(f)
                 runs.append({"id": d_.name, **info})
@@ -292,6 +329,7 @@ class ResultCollection:
 
     def _repr_html_(self):
         return self.dataframe._repr_html_()
+
 
 class Result:
     """UppASD Result parser class."""
@@ -366,7 +404,6 @@ class Result:
                 "IsochoricHeatCapacity", out["C_v[K_B]"].to_numpy() * u.constants.k_B
             ),
         )
-
 
 
 def _parse_inpsd_lines(inpsd: pathlib.Path | str, **kwargs):
