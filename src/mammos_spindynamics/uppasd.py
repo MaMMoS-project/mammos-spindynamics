@@ -1,5 +1,8 @@
 """Functions for interfacing with UppASD."""
 
+from __future__ import annotations
+
+import datetime
 import fnmatch
 import pathlib
 import shutil
@@ -7,7 +10,9 @@ import subprocess
 from io import StringIO
 from typing import TYPE_CHECKING, Any
 
+import json
 import mammos_entity as me
+import mammos_spindynamics
 import mammos_units as u
 import numpy as np
 import pandas as pd
@@ -15,7 +20,7 @@ from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 if TYPE_CHECKING:
-    pass
+    import pandas
 
 _uppasd_bin = shutil.which("sd.gfortran")
 
@@ -89,7 +94,7 @@ class Simulation:
         return n
 
     @property
-    def T_from_inpsd(self) -> float:
+    def get_T_from_inpsd(self) -> float:
         """Read temperature from inpsd.dat file."""
         with open(self.inpsd, encoding="utf-8") as f:
             lines = f.readlines()
@@ -105,52 +110,203 @@ class Simulation:
 
     def run(
         self,
-        T_array: list | np.ndarray | None = None,
-        outdir: pathlib.Path | str = "UppASD",
+        T: float | u.Quantity | None = None,
+        outdir: pathlib.Path | str = "out",
         **kwargs,
     ) -> None:
-        """Run a series of UppASD calculation on different temperatures.
+        """Run a UppASD calculation.
 
-        If the temperature array `temp_array` is not given, the temperature is taken
-        from the input file inpsd.dat.
+        If the temperature `T` is not given, the temperature is taken from the input
+        file inpsd.dat.
 
-        In particular, a result directory will be created for each temperature following
-        the structure:
+        In particular, a `run_0` directory will be created in the output directory
+        `outdir`. If a directory `run_0` already exists, the next available index will
+        be used instead.
+
+        The structure will look like this:
 
         .. code-block::
 
-            +-- outdir/
+            +-- out/
+            |   +-- run_0/
             |   +-- run_1/
-            |   +-- run_10/
-            |   +-- run_20/
+            |   +-- run_2/
+
+        """
+        if T is None:
+            T = self.get_T_from_inpsd
+        outdir = pathlib.Path(outdir)
+        run_idx = 0 if not (outdir / "run_0").is_dir() else max(
+            [int(i.name.lstrip("run_")) for i in outdir.iterdir() if fnmatch.fnmatch(i.name, "run_[0-9]")]
+        ) + 1
+        run_dir = pathlib.Path(outdir) / f"run_{run_idx}"
+        run_dir.mkdir(exist_ok=True, parents=True)
+        shutil.copy(self.jfile, run_dir)
+        shutil.copy(self.momfile, run_dir)
+        shutil.copy(self.posfile, run_dir)
+        with open(run_dir / "inpsd.dat", "w", encoding="utf-8") as f:
+            f.writelines(_parse_inpsd_lines(self.inpsd, temp=str(T), **kwargs))
+        t_start = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        _execute_UppASD_in_path(run_dir)
+        t_end = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        with open(run_dir / "info.json", "w") as f:
+            json.dump(
+                {
+                    "runner": "run",
+                    "temperature": T,
+                    "time_start": t_start,
+                    "time_end": t_end,
+                    "mammos_spindynamics_version": mammos_spindynamics.__version__,
+                },
+                f,
+            )
+
+    def run_temparray(
+        self,
+        T_array: list | np.ndarray,
+        outdir: pathlib.Path | str = "out",
+        **kwargs,
+    ):
+        """Run a series of UppASD calculations with a temperature array.
+
+        In particular, a `run_temparray_0` directory will be created in the output
+        directory `outdir`. If a directory `run_temparray_0` already exists, the next
+        available index will be used instead.
+
+        The structure will look like this:
+
+        .. code-block::
+
+            +-- out/
+            |   +-- run_temparray_0/
+            |   |   +-- run_0/
+            |   |   +-- run_1/
+            |   |   +-- run_2/
+            |   +-- run_temparray_1/
+            |   |   +-- run_0/
+            |   |   +-- run_1/
 
         """
         outdir = pathlib.Path(outdir)
-        outdir.mkdir(exist_ok=True, parents=True)
-        if T_array is None:
-            T_array = [self.T_from_inpsd]
+        run_idx = 0 if not (outdir / "run_temparray_0").is_dir() else max(
+            [int(i.name.lstrip("run_temparray_")) for i in outdir.iterdir() if fnmatch.fnmatch(i.name, "run_temparray_[0-9]")]
+        ) + 1
+        run_temparray_dir = pathlib.Path(outdir) / f"run_temparray_{run_idx}"
+        run_temparray_dir.mkdir(exist_ok=True, parents=True)
+        t_start = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
         for T in T_array:
-            outdir_T = pathlib.Path(outdir) / f"run_{T}"
-            outdir_T.mkdir(exist_ok=True, parents=True)
-            shutil.copy(self.jfile, outdir_T)
-            shutil.copy(self.momfile, outdir_T)
-            shutil.copy(self.posfile, outdir_T)
-            with open(outdir_T / "inpsd.dat", "w", encoding="utf-8") as f:
-                f.writelines(_parse_inpsd_lines(self.inpsd, temp=T, **kwargs))
-            _execute_UppASD_in_path(outdir_T)
-        self.parse_outdir(outdir)
+            self.run(
+                T=T,
+                outdir=run_temparray_dir,
+                **kwargs,
+            )
+        t_end = datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+        with open(run_temparray_dir / "info.json", "w") as f:
+            json.dump(
+                {
+                    "runner": "run_temparray",
+                    "temperature": T_array,
+                    "time_start": t_start,
+                    "time_end": t_end,
+                    "mammos_spindynamics_version": mammos_spindynamics.__version__,
+                },
+                f,
+            )
 
-    def parse_outdir(self, outdir: pathlib.Path | str) -> None:
-        r"""Create `M(T)` file from different calculations.
 
-        In particular, we expect the directory `outdir` to have the following structure:
+def read_result(outdir: pathlib.Path | str) -> ResultCollection:
+    """Read UppASD calculations results directory."""
+    return ResultCollection(outdir)
+    # outdir = pathlib.Path(outdir)
+    # kB = u.constants.k_B.to("mRy/K").value  # Boltzmann constant in [mRy/K]
+    # data = []
+    # for run_dir in outdir.iterdir():
+    #     if "run_" in run_dir.name:
+    #         temp = float(run_dir.name.lstrip("run_"))
+    #         cumulant_files = [
+    #             f
+    #             for f in run_dir.iterdir()
+    #             if fnmatch.fnmatch(f.name, "cumulant*.out")
+    #         ]
+    #         if cumulant_files:
+    #             cumulant_files.sort()
+    #             df = pd.read_csv(cumulant_files[-1], sep=r"\s+")
+    #             row = pd.concat([pd.Series({"T": temp}), df.iloc[-1]])
+    #             data.append(row)
+    # df = pd.DataFrame(data)
+    # df["C_v[K_B]"] = np.gradient(df["<E>"] / kB, df["T"], axis=0)
+    # df.to_csv(outdir / "M(T)_df", index=False, float_format="%.8E")
+    # out = df[["T", "<M>", "U_{Binder}", "C_v[K_B]"]].rename(
+    #     columns={"<M>": "<M>[μB]"}
+    # )
+    # np.savetxt(
+    #     outdir / "M(T)",
+    #     out.to_numpy(),
+    #     fmt=["%04d"] + ["% .8E"] * 3,
+    #     header="T[K] " + "".join([f"{h:^16}" for h in out.columns[1:]]),
+    #     comments="",
+    # )
+    # me.io.entities_to_file(
+    #     outdir / "output.csv",
+    #     "Magnetization and heat capacity from UppASD",
+    #     T=me.Entity("ThermodynamicTemperature", out["T"].to_numpy()),
+    #     Ms=me.Ms(
+    #         out["<M>[μB]"].to_numpy()
+    #         * self.n_magnetic_atoms
+    #         * u.constants.muB
+    #         / self.volume.q,
+    #         unit="A/m",
+    #     ),
+    #     U_binder=out["U_{Binder}"].to_numpy(),
+    #     Cv=me.Entity(
+    #         "IsochoricHeatCapacity", out["C_v[K_B]"].to_numpy() * u.constants.k_B
+    #     ),
+    # )
 
-        .. code-block::
 
-            +-- outdir/
-            |   +-- run_1/
-            |   +-- run_10/
-            |   +-- run_20/
+class ResultCollection:
+    """Collection of UppASD Result instances."""
+
+    def __init__(self, outdir: pathlib.Path):
+        """Initialize ResultCollection instance."""
+        self.outdir = pathlib.Path(outdir)
+        runs = []
+        for d_ in self.outdir.iterdir():
+            if fnmatch.fnmatch(d_.name, "run_[0-9]*") or fnmatch.fnmatch(d_.name, "run_temparray_[0-9]*"):
+                with open(d_ / "info.json") as f:
+                    info = json.load(f)
+                runs.append({"id": d_.name, **info})
+        self.runs = runs
+
+    @property
+    def dataframe(self) -> pandas.DataFrame:
+        """Dataframe containing information about all available UppASD runs."""
+        return pd.DataFrame(self.runs)
+
+    def __getitem__(self, idx):
+        """Extract i-th run."""
+        return Result(self.outdir / self.list_runs[idx])
+
+    def __repr__(self):
+        return repr(self.dataframe)
+
+    def _repr_html_(self):
+        return self.dataframe._repr_html_()
+
+class Result:
+    """UppASD Result parser class."""
+
+    rundir: pathlib.Path
+
+    @property
+    def inpsd(self) -> str:
+        """Return inpsd.dat file."""
+        with open(self.rundir / "inpsd.dat") as f:
+            out = f.read()
+        return out
+
+    def save_output(self, path: pathlib.Path | str | None = None) -> None:
+        """Save output files M(T) and output.csv.
 
         The generated files are `M(T)` and `output.csv`.
         The first has the following structure:
@@ -163,8 +319,9 @@ class Simulation:
 
         The file `output.csv` is generated from :py:mod:`mammos_entity.io` using
         information from `M(T)` and converting to ontology units.
+
         """
-        outdir = pathlib.Path(outdir)
+        path = pathlib.Path(path)
         kB = u.constants.k_B.to("mRy/K").value  # Boltzmann constant in [mRy/K]
         data = []
         for run_dir in outdir.iterdir():
@@ -211,6 +368,7 @@ class Simulation:
         )
 
 
+
 def _parse_inpsd_lines(inpsd: pathlib.Path | str, **kwargs):
     """Parse lines of inpsd.dat.
 
@@ -226,6 +384,14 @@ def _parse_inpsd_lines(inpsd: pathlib.Path | str, **kwargs):
                 new_lines.append(f"{key} {val}\n")
                 break
         else:
+            # check if there is any unset `TEMP` left.
+            if "TEMP" in ll:
+                if "TEMP" in kwargs:
+                    ll = ll.replace("TEMP", kwargs["TEMP"])
+                elif "temp" in kwargs:
+                    ll = ll.replace("TEMP", kwargs["temp"])
+                else:
+                    raise ValueError("Temperature value not given.")
             new_lines.append(ll)
     return new_lines
 
@@ -236,6 +402,7 @@ def _execute_UppASD_in_path(
     """Run UppASD calculation in given path."""
     if not pathlib.Path(path).is_dir():
         raise ValueError("Given directory does not exist.")
+
     res = subprocess.run(
         _uppasd_bin,
         cwd=path,
