@@ -94,8 +94,7 @@ class Simulation:
             n = len(file.readlines())
         return n
 
-    @property
-    def get_T_from_inpsd(self) -> float:
+    def get_temperature_from_inpsd(self) -> float:
         """Read temperature from inpsd.dat file."""
         with open(self.inpsd, encoding="utf-8") as file:
             lines = file.readlines()
@@ -103,7 +102,7 @@ class Simulation:
             if fnmatch.fnmatch(ll, "temp *"):
                 T = ll.removeprefix("temp ").strip()
                 try:
-                    T = float(T)
+                    return float(T.split()[0])
                 except ValueError as exc:
                     raise ValueError(
                         "Unable to read temperature from inpsd.dat file."
@@ -111,14 +110,13 @@ class Simulation:
 
     def run(
         self,
-        T: float | u.Quantity | None = None,
+        temperature: float | u.Quantity | None = None,
         out_dir: pathlib.Path | str = "out",
         **kwargs,
     ) -> None:
         """Run a UppASD calculation.
 
-        If the temperature `T` is not given, the temperature is taken from the input
-        file inpsd.dat.
+        If the temperature is not given, it is taken from the input file inpsd.dat.
 
         In particular, a `run_0` directory will be created in the output directory
         `out_dir`. If a directory `run_0` already exists, the next available index will
@@ -134,8 +132,8 @@ class Simulation:
             |   +-- run_2/
 
         """
-        if T is None:
-            T = self.get_T_from_inpsd
+        if temperature is None:
+            temperature = self.get_temperature_from_inpsd()
         out_dir = pathlib.Path(out_dir)
         run_idx = (
             0
@@ -155,14 +153,16 @@ class Simulation:
         shutil.copy(self.momfile, run_dir)
         shutil.copy(self.posfile, run_dir)
         with open(run_dir / "inpsd.dat", "w", encoding="utf-8") as file:
-            file.writelines(_parse_inpsd_lines(self.inpsd, temp=str(T), **kwargs))
-        t_start = (
+            file.writelines(
+                _parse_inpsd_lines(self.inpsd, temp=str(temperature), **kwargs)
+            )
+        time_start = (
             datetime.datetime.now(datetime.UTC)
             .astimezone()
             .isoformat(timespec="seconds")
         )
         _execute_UppASD_in_path(run_dir)
-        t_end = (
+        time_end = (
             datetime.datetime.now(datetime.UTC)
             .astimezone()
             .isoformat(timespec="seconds")
@@ -171,9 +171,9 @@ class Simulation:
             json.dump(
                 {
                     "runner": "run",
-                    "temperature": T,
-                    "time_start": t_start,
-                    "time_end": t_end,
+                    "temperature": temperature,
+                    "time_start": time_start,
+                    "time_end": time_end,
                     "mammos_spindynamics_version": mammos_spindynamics.__version__,
                 },
                 file,
@@ -181,13 +181,13 @@ class Simulation:
 
     def run_temperature_array(
         self,
-        T_array: list | np.ndarray,
+        temperature_array: list | np.ndarray,
         out_dir: pathlib.Path | str = "out",
         **kwargs,
     ):
         """Run a series of UppASD calculations with a temperature array.
 
-        In particular, a `run_temerature_parray_0` directory will be created in the
+        In particular, a `run_temperature_parray_0` directory will be created in the
         output directory `out_dir`. If a directory `run_temperature_array_0` already
         exists, the next available index will be used instead.
 
@@ -222,18 +222,18 @@ class Simulation:
             pathlib.Path(out_dir) / f"run_temperature_array_{run_idx}"
         )
         run_temperature_array_dir.mkdir(exist_ok=True, parents=True)
-        t_start = (
+        time_start = (
             datetime.datetime.now(datetime.UTC)
             .astimezone()
             .isoformat(timespec="seconds")
         )
-        for T in T_array:
+        for temperature in temperature_array:
             self.run(
-                T=T,
+                temperature=temperature,
                 out_dir=run_temperature_array_dir,
                 **kwargs,
             )
-        t_end = (
+        time_end = (
             datetime.datetime.now(datetime.UTC)
             .astimezone()
             .isoformat(timespec="seconds")
@@ -242,9 +242,9 @@ class Simulation:
             json.dump(
                 {
                     "runner": "run_temperature_array",
-                    "temperature": T_array,
-                    "time_start": t_start,
-                    "time_end": t_end,
+                    "temperature": temperature_array,
+                    "time_start": time_start,
+                    "time_end": time_end,
                     "mammos_spindynamics_version": mammos_spindynamics.__version__,
                 },
                 file,
@@ -302,7 +302,7 @@ class Result:
         self.run_dir = pathlib.Path(run_dir)
         with open(self.run_dir / "info.json") as file:
             info = json.load(file)
-        self.T = info["temperature"]
+        self.temperature = info["temperature"]
         df = pd.read_csv(self.last_cumulant, sep=r"\s+", dtype=object)
         self.data = df.iloc[-1]
 
@@ -374,7 +374,7 @@ class TemperatureArrayResult:
         self.run_dir = pathlib.Path(run_dir)
         with open(self.run_dir / "info.json") as file:
             info = json.load(file)
-        self.T_array = info["temperature"]
+        self.temperature_array = info["temperature"]
         self.sub_runs = []
         for sub_run_dir in self.run_dir.iterdir():
             if "run_" in sub_run_dir.name:
@@ -395,10 +395,14 @@ class TemperatureArrayResult:
         """Dataframe containing information of the temperature_array run."""
         list_data = []
         for sub_run in self.sub_runs:
-            list_data.append(pd.concat([pd.Series({"T": sub_run.T}), sub_run.data]))
+            list_data.append(
+                pd.concat(
+                    [pd.Series({"temperature": sub_run.temperature}), sub_run.data]
+                )
+            )
         df = pd.DataFrame(list_data).astype(
             {
-                "T": "Int64",
+                "temperature": "Int64",
                 "#Iter": "Int64",
                 "<M>": "Float64",
                 "<M^2>": "Float64",
@@ -435,11 +439,15 @@ class TemperatureArrayResult:
         Ms_mu_B_per_atom = self.dataframe["<M>"].to_numpy() * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / self.volume.q
         k_B = u.constants.k_B.to("mRy/K")  # Boltzmann constant in [mRy/K]
-        Cv = np.gradient(self.dataframe["<E>"] / k_B, self.dataframe["T"], axis=0)
+        Cv = np.gradient(
+            self.dataframe["<E>"] / k_B, self.dataframe["temperature"], axis=0
+        )
         me.io.entities_to_file(
             out_dir / "output.csv",
             "Magnetization and heat capacity from UppASD",
-            T=me.Entity("ThermodynamicTemperature", self.dataframe["T"].to_numpy()),
+            T=me.Entity(
+                "ThermodynamicTemperature", self.dataframe["temperature"].to_numpy()
+            ),
             Ms=me.Ms(Ms, unit="A/m"),
             U_binder=self.dataframe["U_{Binder}"].to_numpy(),
             Cv=me.Entity("IsochoricHeatCapacity", Cv),
