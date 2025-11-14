@@ -179,7 +179,7 @@ class Simulation:
                 file,
             )
 
-    def run_temparray(
+    def run_temperature_array(
         self,
         T_array: list | np.ndarray,
         out_dir: pathlib.Path | str = "out",
@@ -187,20 +187,20 @@ class Simulation:
     ):
         """Run a series of UppASD calculations with a temperature array.
 
-        In particular, a `run_temparray_0` directory will be created in the output
-        directory `out_dir`. If a directory `run_temparray_0` already exists, the next
-        available index will be used instead.
+        In particular, a `run_temerature_parray_0` directory will be created in the
+        output directory `out_dir`. If a directory `run_temperature_array_0` already
+        exists, the next available index will be used instead.
 
         The structure will look like this:
 
         .. code-block::
 
             +-- out/
-            |   +-- run_temparray_0/
+            |   +-- run_temperature_array_0/
             |   |   +-- run_0/
             |   |   +-- run_1/
             |   |   +-- run_2/
-            |   +-- run_temparray_1/
+            |   +-- run_temperature_array_1/
             |   |   +-- run_0/
             |   |   +-- run_1/
 
@@ -208,18 +208,20 @@ class Simulation:
         out_dir = pathlib.Path(out_dir)
         run_idx = (
             0
-            if not (out_dir / "run_temparray_0").is_dir()
+            if not (out_dir / "run_temperature_array_0").is_dir()
             else max(
                 [
-                    int(i.name.removeprefix("run_temparray_"))
+                    int(i.name.removeprefix("run_temperature_array_"))
                     for i in out_dir.iterdir()
-                    if fnmatch.fnmatch(i.name, "run_temparray_[0-9]")
+                    if fnmatch.fnmatch(i.name, "run_temperature_array_[0-9]")
                 ]
             )
             + 1
         )
-        run_temparray_dir = pathlib.Path(out_dir) / f"run_temparray_{run_idx}"
-        run_temparray_dir.mkdir(exist_ok=True, parents=True)
+        run_temperature_array_dir = (
+            pathlib.Path(out_dir) / f"run_temperature_array_{run_idx}"
+        )
+        run_temperature_array_dir.mkdir(exist_ok=True, parents=True)
         t_start = (
             datetime.datetime.now(datetime.UTC)
             .astimezone()
@@ -228,7 +230,7 @@ class Simulation:
         for T in T_array:
             self.run(
                 T=T,
-                out_dir=run_temparray_dir,
+                out_dir=run_temperature_array_dir,
                 **kwargs,
             )
         t_end = (
@@ -236,10 +238,10 @@ class Simulation:
             .astimezone()
             .isoformat(timespec="seconds")
         )
-        with open(run_temparray_dir / "info.json", "w") as file:
+        with open(run_temperature_array_dir / "info.json", "w") as file:
             json.dump(
                 {
-                    "runner": "run_temparray",
+                    "runner": "run_temperature_array",
                     "temperature": T_array,
                     "time_start": t_start,
                     "time_end": t_end,
@@ -249,8 +251,6 @@ class Simulation:
             )
 
 
-# def read_result(...):  # ?
-# def read_out_dir(...):  # ?
 def get_ResultCollection(out_dir: pathlib.Path | str) -> ResultCollection:
     """Read UppASD calculations results directory."""
     return ResultCollection(out_dir)
@@ -265,7 +265,7 @@ class ResultCollection:
         runs = []
         for d_ in self.out_dir.iterdir():
             if fnmatch.fnmatch(d_.name, "run_[0-9]*") or fnmatch.fnmatch(
-                d_.name, "run_temparray_[0-9]*"
+                d_.name, "run_temperature_array_[0-9]*"
             ):
                 with open(d_ / "info.json") as file:
                     info = json.load(file)
@@ -281,8 +281,8 @@ class ResultCollection:
         """Extract i-th run."""
         if self.runs[idx]["runner"] == "run":
             return Result(self.out_dir / self.runs[idx]["id"])
-        elif self.runs[idx]["runner"] == "run_temparray":
-            return TempArrayResult(self.out_dir / self.runs[idx]["id"])
+        elif self.runs[idx]["runner"] == "run_temperature_array":
+            return TemperatureArrayResult(self.out_dir / self.runs[idx]["id"])
         else:
             raise RuntimeError("Runner not recognized.")
 
@@ -303,7 +303,7 @@ class Result:
         with open(self.run_dir / "info.json") as file:
             info = json.load(file)
         self.T = info["temperature"]
-        df = pd.read_csv(self.last_cumulant, sep=r"\s+")
+        df = pd.read_csv(self.last_cumulant, sep=r"\s+", dtype=object)
         self.data = df.iloc[-1]
 
     @property
@@ -366,11 +366,11 @@ class Result:
         return n
 
 
-class TempArrayResult:
-    """Class for the result of the temparray runner."""
+class TemperatureArrayResult:
+    """Class for the result of the temperature_array runner."""
 
     def __init__(self, run_dir: pathlib.Path | str):
-        """Initialize TempArrayResult given the run directory."""
+        """Initialize TemperatureArrayResult given the run directory."""
         self.run_dir = pathlib.Path(run_dir)
         with open(self.run_dir / "info.json") as file:
             info = json.load(file)
@@ -392,14 +392,25 @@ class TempArrayResult:
 
     @property
     def dataframe(self) -> pandas.DataFrame:
-        """Dataframe containing information of the temparray run."""
-        kB = u.constants.k_B.to("mRy/K").value  # Boltzmann constant in [mRy/K]
+        """Dataframe containing information of the temperature_array run."""
         list_data = []
         for sub_run in self.sub_runs:
             list_data.append(pd.concat([pd.Series({"T": sub_run.T}), sub_run.data]))
-        df = pd.DataFrame(list_data)
-        df["C_v[K_B]"] = np.gradient(df["<E>"] / kB, df["T"], axis=0)
-        df = df.rename(columns={"<M>": "<M>[μB]", "#Iter": "iter"})
+        df = pd.DataFrame(list_data).astype(
+            {
+                "T": "Int64",
+                "#Iter": "Int64",
+                "<M>": "Float64",
+                "<M^2>": "Float64",
+                "<M^4>": "Float64",
+                "U_{Binder}": "Float64",
+                r"\chi": "Float64",
+                "C_v(tot)": "Float64",
+                "<E>": "Float64",
+                "<E_{exc}>": "Float64",
+                "<E_{lsf}>": "Float64",
+            }
+        )
         return df
 
     def save_output(self, out_dir: pathlib.Path | str | None = None) -> None:
@@ -421,22 +432,17 @@ class TempArrayResult:
             + "".join([f"{h:^16}" for h in self.dataframe.columns[2:]]),
             comments="",
         )
+        Ms_mu_B_per_atom = self.dataframe["<M>"].to_numpy() * u.mu_B
+        Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / self.volume.q
+        k_B = u.constants.k_B.to("mRy/K")  # Boltzmann constant in [mRy/K]
+        Cv = np.gradient(self.dataframe["<E>"] / k_B, self.dataframe["T"], axis=0)
         me.io.entities_to_file(
             out_dir / "output.csv",
             "Magnetization and heat capacity from UppASD",
             T=me.Entity("ThermodynamicTemperature", self.dataframe["T"].to_numpy()),
-            Ms=me.Ms(
-                self.dataframe["<M>[μB]"].to_numpy()
-                * self.n_magnetic_atoms
-                * u.constants.muB
-                / self.volume.q,
-                unit="A/m",
-            ),
+            Ms=me.Ms(Ms, unit="A/m"),
             U_binder=self.dataframe["U_{Binder}"].to_numpy(),
-            Cv=me.Entity(
-                "IsochoricHeatCapacity",
-                self.dataframe["C_v[K_B]"].to_numpy() * u.constants.k_B,
-            ),
+            Cv=me.Entity("IsochoricHeatCapacity", Cv),
         )
 
 
