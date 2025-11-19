@@ -301,10 +301,14 @@ class Result:
         """Initialize Result given the run directory."""
         self.run_dir = pathlib.Path(run_dir)
         with open(self.run_dir / "info.json") as file:
-            info = json.load(file)
-        self.temperature = info["temperature"]
+            self.info = json.load(file)
         df = pd.read_csv(self.last_cumulant, sep=r"\s+", dtype=object)
         self.data = df.iloc[-1]
+
+    @property
+    def temperature(self) -> float:
+        """Return temperature."""
+        return self.info["temperature"]
 
     @property
     def inpsd(self) -> str:

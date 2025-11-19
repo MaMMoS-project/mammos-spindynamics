@@ -130,13 +130,13 @@ def test_run(DATA, tmp_path):
     )
 
     results = uppasd.ResultCollection(tmp_path)
-    run_info = results.runs[0]
     res = results[0]
+    run_info = res.info
 
     # Load generated info.json and check informations
     with open(tmp_path / "run_0" / "info.json") as file:
         info_json = json.load(file)
-    for key, value in run_info:
+    for key, value in run_info.items():
         assert info_json[key] == value
 
     # Check simulation metadata
@@ -146,19 +146,5 @@ def test_run(DATA, tmp_path):
     # Check correct temperature has been used
     assert res.temperature == temperature
 
-    # TODO: continue tests
 
-
-# def test_run_temperature_array(DATA, tmp_path):
-#     """Test UppASD simulation with the `run_temperature_array` method."""
-#     sim = uppasd.Simulation(
-#         jfile=DATA / "uppasd/jfile",
-#         momfile=DATA / "uppasd/momfile",
-#         posfile=DATA / "uppasd/posfile",
-#         inpsd=DATA / "uppasd/inpsd.dat",
-#     )
-#     temperature_array = [15, 20]
-#     sim.run_temperature_array(
-#         temperature_array,
-#         out_dir=tmp_path,
-#     )
+# TODO: temperature array test?
