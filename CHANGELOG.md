@@ -6,6 +6,13 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.2.4](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.4) – 2025-12-02
+
+### Misc
+
+- Fix dependencies: add `numpy` as an explicit dependency. ([#38](https://github.com/MaMMoS-project/mammos-spindynamics/pull/38))
+
+
 ## [mammos-spindynamics 0.2.3](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.3) – 2025-08-12
 
 ### Misc
