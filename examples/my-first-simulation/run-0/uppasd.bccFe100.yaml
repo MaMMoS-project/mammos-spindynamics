@@ -1,0 +1,21 @@
+simid: bccFe100
+date: 2025-12-04
+git_revision: 
+siminfo:
+    temperature:    10.000000         
+    timestep:       0.10000000E-15    
+    damping:        0.10000000        
+    nstep:          1       
+    mode:           M-MC
+    alat:           0.10000000E-09    
+    sc_sep:         100     
+measurables:
+    averages:       Yes
+    trajectories:   No 
+    moments:        Yes
+    sqw:            No 
+    ams:            Yes
+    nc-ams:         No 
+    totenergy:      Yes
+    cumulants:      Yes
+    coord:          Yes
