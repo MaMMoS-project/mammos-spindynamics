@@ -2,26 +2,18 @@
 
 from __future__ import annotations
 
-import datetime
 import fnmatch
-import yaml
 import pathlib
-import shutil
-import subprocess
+from collections.abc import Iterable
 from io import StringIO
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
-import mammos_entity as me
-import mammos_units as u
 import numpy as np
-import pandas as pd
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 if TYPE_CHECKING:
-    import mammos_units
-    import numpy
-    import pandas
+    pass
 
 
 STRING_PARAMETERS = {
@@ -172,10 +164,13 @@ def parse_inpsd_file(inpsd_file: pathlib.Path | str) -> dict:
             a = np.genfromtxt(StringIO(line.removeprefix("cell")))
             b = np.genfromtxt(StringIO(lines[i + 1]))
             c = np.genfromtxt(StringIO(lines[i + 2]))
-            parameters["cell"] = np.vstack((a,b,c))
+            parameters["cell"] = np.vstack((a, b, c))
         if fnmatch.fnmatch(line, "ncell*"):
-            parameters["ncell"] = np.genfromtxt(StringIO(line.removeprefix("ncell")))[:3]
+            parameters["ncell"] = np.genfromtxt(StringIO(line.removeprefix("ncell")))[
+                :3
+            ]
     return parameters
+
 
 # def _parse_inpsd_lines(inpsd: pathlib.Path | str, **kwargs):
 #     """Parse lines of inpsd.dat.

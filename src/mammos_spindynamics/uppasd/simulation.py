@@ -4,28 +4,21 @@ from __future__ import annotations
 
 import datetime
 import fnmatch
-import yaml
 import pathlib
 import shutil
 import subprocess
-from io import StringIO
-from typing import TYPE_CHECKING, Any, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
-import mammos_entity as me
-import mammos_units as u
-import numpy as np
-import pandas as pd
-from pydantic import field_validator
+import yaml
 from pydantic.dataclasses import dataclass
 
 import mammos_spindynamics
-from mammos_spindynamics.uppasd.inpsd import Input, parse_inpsd_file
 from mammos_spindynamics.uppasd.data import RunData, TemperatureSweepData
+from mammos_spindynamics.uppasd.inpsd import Input, parse_inpsd_file
 
 if TYPE_CHECKING:
     import mammos_units
-    import numpy
-    import pandas
 
 
 _uppasd_bin = shutil.which("uppasd")
@@ -105,7 +98,7 @@ class Simulation:
                         "time_end": time_end.isoformat(timespec="seconds"),
                         "time_elapsed": time_elapsed,
                     },
-                    "parameters": parameters
+                    "parameters": parameters,
                 },
                 file,
             )
@@ -225,4 +218,6 @@ def _get_available_out_dir(out, prefix):
 
 def _get_formatted_time():
     """Get time formatted in UTC and seconds."""
-    return datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+    return (
+        datetime.datetime.now(datetime.UTC).astimezone().isoformat(timespec="seconds")
+    )

@@ -2,29 +2,20 @@
 
 from __future__ import annotations
 
-import datetime
 import fnmatch
-import yaml
 import pathlib
-import shutil
-import subprocess
-from io import StringIO
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING
 
 import mammos_entity as me
 import mammos_units as u
 import numpy as np
 import pandas as pd
-from pydantic import field_validator
-from pydantic.dataclasses import dataclass
+import yaml
 
-import mammos_spindynamics
 from mammos_spindynamics.uppasd.inpsd import parse_inpsd_file
 
 if TYPE_CHECKING:
     import mammos_entity
-    import mammos_units
-    import numpy
     import pandas
 
 
@@ -46,7 +37,6 @@ def read(out: pathlib.Path | str) -> MammosUppasdData | RunData | TemperatureSwe
             raise RuntimeError(f"Cannot understand mode {mode} in info.yaml.")
     else:
         return MammosUppasdData(out)
-
 
 
 class MammosUppasdData:
@@ -136,9 +126,7 @@ class RunData:
     def last_cumulant(self) -> str:
         """Return last ``cumulant*.out`` file."""
         cumulant_files = [
-            f
-            for f in self.out.iterdir()
-            if fnmatch.fnmatch(f.name, "cumulant*.out")
+            f for f in self.out.iterdir() if fnmatch.fnmatch(f.name, "cumulant*.out")
         ]
         if not cumulant_files:
             raise ValueError(
@@ -165,7 +153,7 @@ class RunData:
         """Evaluate Spontaneous Magnetization."""
         cell = self.input_dictionary["cell"]
         lattice_const = self.input_dictionary["alat"] * u.m
-        cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const ** 3
+        cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
         Ms_mu_B_per_atom = float(self.data["<M>"]) * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / cell_volume
         return me.Ms(Ms, unit="A/m")
