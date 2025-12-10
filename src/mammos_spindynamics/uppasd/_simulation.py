@@ -1,0 +1,205 @@
+import copy
+import datetime
+import shutil
+import string
+import subprocess
+import warnings
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+import mammos_spindynamics
+
+from ._inpsd_dat import INP_FILE_TEMPLATE, create_input_files
+
+DEFAULT_SIMULATION_PARAMETERS = {
+    "ncell": [25, 25, 25],
+    "ip_mcnstep": 25_000,
+    "mcnstep": 50_000,
+}
+
+
+class Simulation:
+    def __init__(self, **kwargs):
+        self._simulation_parameters_init = kwargs
+
+    @classmethod
+    def from_inpsd(
+        cls, inpsd_dat, exchange="./jfile", posfile="./posfile", momfile="./momfile"
+    ):
+        return cls(
+            inpsd_dat=inpsd_dat, exchange=exchange, posfile=posfile, momfile=momfile
+        )
+
+    @property
+    @staticmethod
+    def allowed_parameters(self):
+        return set(
+            key
+            for _text, key, _format_spec, _conversion in string.Formatter().parse(
+                INP_FILE_TEMPLATE
+            )
+            if key is not None and key not in ["restartfile_line"]
+        )
+
+    @property
+    @staticmethod
+    def required_parameters(self):
+        return set(
+            key
+            for key in self.allowed_parameters
+            if key not in DEFAULT_SIMULATION_PARAMETERS
+        )
+
+    def run(
+        self,
+        out: str | Path,
+        comment="",
+        uppasd_executable="uppasd",
+        dry_run=False,
+        verbosity=1,
+        **kwargs,
+    ):
+        out = Path(out)
+        uppasd_executable = _find_executable(uppasd_executable)
+
+        if "inpsd_dat" in self._simulation_parameters_init:
+            if set(kwargs) - {"ip_temp", "temp"}:
+                raise RuntimeError(
+                    "Only ip_temp and temp can be changed in 'run' when passing a file"
+                    " for inpsd.dat"
+                )
+            inp_file = Path(self._simulation_parameters_init["inpsd_dat"]).read_text()
+            files_to_copy = {
+                file_: Path(self._simulation_parameters_init[file_])
+                for file_ in ["exchange", "posfile", "momfile"]
+            }
+        else:
+            simulation_parameters: dict = copy.copy(DEFAULT_SIMULATION_PARAMETERS)
+            simulation_parameters.update(self._simulation_parameters_init)
+            simulation_parameters.update(kwargs)
+
+            if missing_parameters := self.required_parameters - set(
+                simulation_parameters.keys()
+            ):
+                raise RuntimeError(
+                    f"The following parameters are missing: {missing_parameters}"
+                )
+            inp_file, files_to_copy = create_input_files(out, **simulation_parameters)
+
+        if dry_run:
+            print(inp_file)
+            return
+
+        run_path, index = _create_run_dir(out)
+
+        metadata = {
+            "metadata": {
+                "mammos_spindynamics_version": mammos_spindynamics.__version__,
+                "mode": "run",
+                "comment": comment,
+                "index": index,
+            },
+            "parameters": kwargs,
+        }
+        _write_inputs(run_path, inp_file, files_to_copy, metadata)
+
+        start_time = datetime.datetime.now().isoformat(timespec="seconds")
+        if verbosity == 1:
+            print(f"Running UppASD in {run_path!s} ...", end="")
+        _run_simulation(run_path, uppasd_executable)
+        end_time = datetime.datetime.now().isoformat(timespec="seconds")
+
+        if verbosity == 1:
+            elapsed_time = datetime.datetime.fromisoformat(
+                end_time
+            ) - datetime.datetime.fromisoformat(start_time)
+            print(f" simulation finished, took {elapsed_time!s}")
+
+        _update_metadata_file(run_path, start_time, end_time)
+        # return uppasd.read(run_dir)
+
+
+def _create_run_dir(base: Path) -> tuple[Path, int]:
+    if not base.exists():
+        base.mkdir(parents=True)
+    elif base.is_file():
+        raise RuntimeError(f"The path '{base}' passed as output directory is a file.")
+
+    if existing_runs := list(base.glob("run-*")):
+        max_run_counter = max(
+            int(run.name.removeprefix("run-")) for run in existing_runs
+        )
+        next_index = max_run_counter + 1
+    else:
+        next_index = 0
+
+    next_run_path = base / f"run-{next_index}"
+    next_run_path.mkdir()
+    return next_run_path, next_index
+
+
+def _write_inputs(
+    run_path: Path,
+    inp_file_content: str,
+    files_to_copy: dict[str, Path],
+    metadata: dict[str, Any],
+) -> None:
+    (run_path / "inpsd.dat").write_text(inp_file_content)
+    for name, orig_path in files_to_copy.items():
+        shutil.copy(orig_path, run_path / name)
+    with open(run_path / "mammos_spindynamics.yaml", "w") as f:
+        yaml.dump(metadata, f)
+
+
+def _find_executable(uppasd_executable: str) -> Path:
+    exe = shutil.which(uppasd_executable)
+    if not exe:
+        raise RuntimeError(
+            f"Could not find UppASD executable with name '{uppasd_executable}' in PATH"
+        )
+    return Path(exe).resolve()
+
+
+def _run_simulation(run_dir: Path, uppasd_executable: str):
+    with (
+        open(run_dir / "uppasd_stdout.txt", "w") as stdout,
+        open(run_dir / "uppasd_stderr.txt", "w") as stderr,
+    ):
+        subprocess.check_call(
+            uppasd_executable, cwd=run_dir, stdout=stdout, stderr=stderr
+        )
+
+    if "ERROR" in (stdout := (run_dir / "uppasd_stdout.txt").read_text()):
+        warnings.warn(
+            f"UppASD output contains ERROR lines, simulation likely failed:\n{stdout}",
+            stacklevel=3,
+        )
+
+
+def _update_metadata_file(run_path: Path, start_time: str, end_time: str):
+    # convert to string first to limit resolution to seconds
+    with open(run_path / "mammos_spindynamics.yaml") as f:
+        metadata = yaml.safe_load(f)
+
+    uppasd_yaml = list(run_path.glob("uppasd.*.yaml"))
+    if uppasd_yaml:
+        with open(uppasd_yaml[0]) as f:
+            uppasd_git_revision = yaml.safe_load(f)["git_revision"]
+    else:
+        uppasd_git_revision = "<unknown>"
+
+    elapsed_time = datetime.datetime.fromisoformat(
+        end_time
+    ) - datetime.datetime.fromisoformat(start_time)
+    metadata["metadata"].update(
+        {
+            "start_time": start_time,
+            "end_time": end_time,
+            "elapsed_time": str(elapsed_time),
+            "uppasd_git_revision": uppasd_git_revision,
+        }
+    )
+    with open(run_path / "mammos_spindynamics.yaml", "w") as f:
+        yaml.dump(metadata, f)
