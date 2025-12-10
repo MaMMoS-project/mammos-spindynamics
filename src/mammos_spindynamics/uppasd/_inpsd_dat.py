@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Any
 
@@ -47,29 +48,40 @@ def serialize_parameters(parameters: dict[str, Any]) -> dict[str, str]:
     serialized = {}
     for key, val in parameters.items():
         if key == "cell":
-            cell = np.asanyarray(val)  # captures all shape mismatches
-            if cell.shape != (3, 3):
-                raise ValueError(
-                    f"'cell' must be a 3x3 matrix or a list of 3 vectors;"
-                    f"got incompatible shape '{cell.shape}'"
-                )
-            if cell.dtype not in [int, float]:
-                raise TypeError(
-                    f"'cell' elements must be of type int or float, not {cell.dtype}"
-                )
-            # additional indentation for lines 2 and 3 to account for 'cell  ' in the
-            # first line
-            val = (
-                f"{cell[0, 0]} {cell[0, 1]} {cell[0, 2]}\n"
-                f"      {cell[1, 0]} {cell[1, 1]} {cell[1, 2]}\n"
-                f"      {cell[2, 0]} {cell[2, 1]} {cell[2, 2]}"
-            )
+            val = _serialise_cell(val)
         elif key == "ncell":
-            assert len(val) == 3 and all(isinstance(elem, int) for elem in val)
-            val = " ".join(map(str, val))
+            val = _serialise_ncell(val)
         serialized[key] = str(val)
 
     return serialized
+
+
+def _serialise_cell(val: Any) -> str:
+    cell = np.asanyarray(val)  # captures all shape mismatches
+    if cell.dtype not in [int, float]:
+        raise TypeError(
+            f"'cell' elements must be of type int or float, not {cell.dtype}"
+        )
+    if cell.shape != (3, 3):
+        raise ValueError(
+            f"'cell' must be a 3x3 matrix or a list of 3 vectors;"
+            f"got incompatible shape '{cell.shape}'"
+        )
+    # additional indentation for lines 2 and 3 to account for 'cell  ' in the
+    # first line
+    return (
+        f"{cell[0, 0]} {cell[0, 1]} {cell[0, 2]}\n"
+        f"      {cell[1, 0]} {cell[1, 1]} {cell[1, 2]}\n"
+        f"      {cell[2, 0]} {cell[2, 1]} {cell[2, 2]}"
+    )
+
+
+def _serialise_ncell(val: Any) -> str:
+    if len(val) != 3:
+        raise ValueError(f"ncell must be of length 3, not {len(val)}.")
+    if any(not isinstance(elem, int) for elem in val):
+        raise TypeError("All elements of ncell must be of type int.")
+    return " ".join(map(str, val))
 
 
 def create_input_files(out: Path, **kwargs) -> tuple[str, dict[str, Path]]:
@@ -113,3 +125,50 @@ def external_file(simulation_parameters: dict[str, Any], key: str) -> Path:
         raise ValueError(f"File '{file_path!s}' passed for {key} does not exist")
 
     return file_path
+
+
+def preprocess_inpsd_dat(
+    inpsd_dat: Path, simulation_parameters: dict[str, Any]
+) -> tuple[str, dict[str, Path]]:
+    inp_file = inpsd_dat.read_text()
+    files_to_copy = {}
+    for key, val in simulation_parameters.items():
+        pattern = rf"^{key}\s.*$"
+        if key == "cell":
+            val = _serialise_cell(val)
+            pattern = rf"^{key}\s.*\n.*\n$"
+        elif key == "ncell":
+            val = _serialise_ncell(val)
+
+        inp_file = re.sub(pattern, f"{key} {val!s}", inp_file, flags=re.MULTILINE)
+
+    for file_ in ["exchange", "posfile", "momfile", "restartfile"]:
+        if file_ not in simulation_parameters and (
+            match_ := re.search(rf"^{file_}\s+([^\s+]+)", inp_file, flags=re.MULTILINE)
+        ):
+            # add file name from input file to simulation parameters to be able to use
+            # the 'external_file' function
+            simulation_parameters[file_] = match_.group(1)
+
+        if file_ == "restartfile":
+            init_mag = re.search("initmag\s+([^\s]+)", inp_file.lower())
+            if not init_mag:
+                raise RuntimeError("Missing option 'initmag' in inpsd.dat")
+            if int(init_mag.group(1)) != 4:
+                # restartfile is only used for initmag 4, so we ignore it for any other
+                # value of initmag
+                continue
+
+        # stick to the convention of calling the exchange file 'jfile'
+        copied_file = "jfile" if file_ == "exchange" else file_
+        files_to_copy[copied_file] = external_file(simulation_parameters, file_)
+        # hard-coded names for auxilary files to ensure that each run directory is
+        # fully self-contained
+        inp_file = re.sub(
+            rf"^#?{file_}\s.*$",
+            f"{file_} ./{copied_file!s}",
+            inp_file,
+            flags=re.MULTILINE,
+        )
+
+    return inp_file, files_to_copy

@@ -11,7 +11,7 @@ import yaml
 
 import mammos_spindynamics
 
-from ._inpsd_dat import INP_FILE_TEMPLATE, create_input_files
+from ._inpsd_dat import INP_FILE_TEMPLATE, create_input_files, preprocess_inpsd_dat
 
 DEFAULT_SIMULATION_PARAMETERS = {
     "ncell": [25, 25, 25],
@@ -21,16 +21,9 @@ DEFAULT_SIMULATION_PARAMETERS = {
 
 
 class Simulation:
-    def __init__(self, **kwargs):
+    def __init__(self, inpsd_dat=None, **kwargs):
+        self._inpsd_dat = inpsd_dat
         self._simulation_parameters_init = kwargs
-
-    @classmethod
-    def from_inpsd(
-        cls, inpsd_dat, exchange="./jfile", posfile="./posfile", momfile="./momfile"
-    ):
-        return cls(
-            inpsd_dat=inpsd_dat, exchange=exchange, posfile=posfile, momfile=momfile
-        )
 
     @property
     @staticmethod
@@ -52,45 +45,50 @@ class Simulation:
             if key not in DEFAULT_SIMULATION_PARAMETERS
         )
 
-    def run(
-        self,
-        out: str | Path,
-        comment="",
-        uppasd_executable="uppasd",
-        dry_run=False,
-        verbosity=1,
-        **kwargs,
-    ):
-        out = Path(out)
-        uppasd_executable = _find_executable(uppasd_executable)
-
-        if "inpsd_dat" in self._simulation_parameters_init:
-            if set(kwargs) - {"ip_temp", "temp"}:
-                raise RuntimeError(
-                    "Only ip_temp and temp can be changed in 'run' when passing a file"
-                    " for inpsd.dat"
-                )
-            inp_file = Path(self._simulation_parameters_init["inpsd_dat"]).read_text()
-            files_to_copy = {
-                file_: Path(self._simulation_parameters_init[file_])
-                for file_ in ["exchange", "posfile", "momfile"]
-            }
+    def create_input_files(
+        self, out: str | Path, **kwargs
+    ) -> tuple[str, dict[str, Path]]:
+        if self._inpsd_dat:
+            simulation_parameters = copy.copy(self._simulation_parameters_init)
+            simulation_parameters.update(kwargs)
         else:
-            simulation_parameters: dict = copy.copy(DEFAULT_SIMULATION_PARAMETERS)
-            simulation_parameters.update(self._simulation_parameters_init)
+            simulation_parameters = copy.copy(DEFAULT_SIMULATION_PARAMETERS)
+            simulation_parameters.update(copy.copy(self._simulation_parameters_init))
             simulation_parameters.update(kwargs)
 
+        if T := simulation_parameters.pop("T", None):
+            # convenience for the user: set both ip_temp and temp to the same value
+            if "ip_temp" in simulation_parameters or "temp" in simulation_parameters:
+                raise ValueError(
+                    "Parameter 'T' cannot be used simultaneously with parameters"
+                    " '(temp, ip_temp)'"
+                )
+            simulation_parameters["ip_temp"] = T
+            simulation_parameters["temp"] = T
+
+        if self._inpsd_dat:
+            return preprocess_inpsd_dat(Path(self._inpsd_dat), simulation_parameters)
+        else:
             if missing_parameters := self.required_parameters - set(
                 simulation_parameters.keys()
             ):
                 raise RuntimeError(
                     f"The following parameters are missing: {missing_parameters}"
                 )
-            inp_file, files_to_copy = create_input_files(out, **simulation_parameters)
+            return create_input_files(out, **simulation_parameters)
 
-        if dry_run:
-            print(inp_file)
-            return
+    def run(
+        self,
+        out: str | Path,
+        comment="",
+        uppasd_executable="uppasd",
+        verbosity=1,
+        **kwargs,
+    ):
+        out = Path(out)
+        uppasd_executable = _find_executable(uppasd_executable)
+
+        inp_file_content, files_to_copy = self.create_input_files(out, **kwargs)
 
         run_path, index = _create_run_dir(out)
 
@@ -101,9 +99,9 @@ class Simulation:
                 "comment": comment,
                 "index": index,
             },
-            "parameters": kwargs,
+            "parameters": {key: str(value) for key, value in kwargs.items()},
         }
-        _write_inputs(run_path, inp_file, files_to_copy, metadata)
+        _write_inputs(run_path, inp_file_content, files_to_copy, metadata)
 
         start_time = datetime.datetime.now().isoformat(timespec="seconds")
         if verbosity == 1:
@@ -184,6 +182,7 @@ def _update_metadata_file(run_path: Path, start_time: str, end_time: str):
         metadata = yaml.safe_load(f)
 
     uppasd_yaml = list(run_path.glob("uppasd.*.yaml"))
+    uppasd_yaml = None
     if uppasd_yaml:
         with open(uppasd_yaml[0]) as f:
             uppasd_git_revision = yaml.safe_load(f)["git_revision"]
