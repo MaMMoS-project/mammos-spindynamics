@@ -1,9 +1,9 @@
-chemical_formula,space_group_name,space_group_number,cell_length_a,cell_length_b,cell_length_c,cell_angle_alpha,cell_angle_beta,cell_angle_gamma,cell_volume,ICSD_label,OQMD_label,label,source,
-Co2Fe2H4,P6_3/mmc,194,2.645345 AA,2.645314 AA,8.539476 AA,90 deg,90 deg,120 deg,51.751119 AA^3,,,0001,Uppsala,
-Y2Ti4Fe18,P4/mbm,127,8.186244 AA,8.186244 AA,4.892896 AA,90 deg,90 deg,90 deg,327.8954234 AA^3,,,0002,Uppsala,
-Nd2Fe14B,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,,0003,https://doi.org/10.1103/PhysRevB.99.214409,
-#Ni80Fe20,?,0,NaN AA,NaN AA,NaN AA,NaN deg,NaN deg,NaN deg,NaN AA^3,,,0004,https://doi.org/10.48550/arXiv.1908.08885  # extracted visually,
-Fe16N2,?,0,NaN AA,NaN AA,NaN AA,NaN deg,NaN deg,NaN deg,NaN AA^3,,,0005,Uppsala,
-Ni80Fe20,Pm-3m,221,3.55 AA,3.55 AA,3.55 AA,90 deg,90 deg,90 deg,44.738875 AA^3,,,0006,https://doi.org/10.48550/arXiv.1908.08885, space group: https://doi.org/10.1016/j.physb.2023.414782
-Fe3Y,,,5.088172 AA,5.088172 AA,24.355398 AA,90 deg,90 deg,120 deg,546.071496 AA^3,,,0007,Uppsala,
-Fe2.33Ta0.67Y,,,5.227483 AA,5.227483 AA,25.022642 AA,90 deg,90 deg,120 deg,592.173679 AA^3,,,0008,Uppsala,
+chemical_formula,space_group_name,space_group_number,cell_length_a,cell_length_b,cell_length_c,cell_angle_alpha,cell_angle_beta,cell_angle_gamma,cell_volume,ICSD_label,OQMD_label,label,source
+Co2Fe2H4,P6_3/mmc,194,2.645345 AA,2.645314 AA,8.539476 AA,90 deg,90 deg,120 deg,51.751119 AA^3,,,0001,Uppsala
+Y2Ti4Fe18,P4/mbm,127,8.186244 AA,8.186244 AA,4.892896 AA,90 deg,90 deg,90 deg,327.8954234 AA^3,,,0002,Uppsala
+Nd2Fe14B,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,,0003,https://doi.org/10.1103/PhysRevB.99.214409
+#Ni80Fe20,?,0,NaN AA,NaN AA,NaN AA,NaN deg,NaN deg,NaN deg,NaN AA^3,,,0004,https://doi.org/10.48550/arXiv.1908.08885  # extracted visually
+Fe16N2,?,0,NaN AA,NaN AA,NaN AA,NaN deg,NaN deg,NaN deg,NaN AA^3,,,0005,Uppsala
+Ni80Fe20,Pm-3m,221,3.55 AA,3.55 AA,3.55 AA,90 deg,90 deg,90 deg,44.738875 AA^3,,,0006,https://doi.org/10.48550/arXiv.1908.08885; space group: https://doi.org/10.1016/j.physb.2023.414782
+Fe3Y,,,5.088172 AA,5.088172 AA,24.355398 AA,90 deg,90 deg,120 deg,546.071496 AA^3,,,0007,Uppsala
+Fe2.33Ta0.67Y,,,5.227483 AA,5.227483 AA,25.022642 AA,90 deg,90 deg,120 deg,592.173679 AA^3,,,0008,Uppsala
