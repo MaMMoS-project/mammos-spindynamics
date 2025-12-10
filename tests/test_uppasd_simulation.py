@@ -114,10 +114,9 @@ def test_write_inputs(tmp_path: Path):
 
 
 def test_find_executable():
-    # TODO: might not work on windows, because it is called uppasd.exe
     exe = _simulation._find_executable("uppasd")
     assert isinstance(exe, Path)
-    assert ".pixi/envs/default/bin/uppasd" in exe.as_posix()
+    assert ".pixi/envs/default/" in exe.as_posix()  # common part on Windows and Unix
     with pytest.raises(RuntimeError):
         _simulation._find_executable("this-is-not-uppasd")
 
