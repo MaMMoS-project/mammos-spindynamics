@@ -151,7 +151,7 @@ def preprocess_inpsd_dat(
             simulation_parameters[file_] = match_.group(1)
 
         if file_ == "restartfile":
-            init_mag = re.search("initmag\s+([^\s]+)", inp_file.lower())
+            init_mag = re.search(r"initmag\s+([^\s]+)", inp_file.lower())
             if not init_mag:
                 raise RuntimeError("Missing option 'initmag' in inpsd.dat")
             if int(init_mag.group(1)) != 4:
