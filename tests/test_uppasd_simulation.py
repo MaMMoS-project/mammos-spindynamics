@@ -130,6 +130,7 @@ def test_update_metadata_file():
 
 
 def test_simulation_run(tmp_path: Path):
+    data_dir = Path(uppasd.__file__).parent.parent / "data" / "0001"
     sim = uppasd.Simulation()
 
     with pytest.raises(RuntimeError, match="parameters are missing"):
@@ -143,23 +144,21 @@ def test_simulation_run(tmp_path: Path):
         alat=2.65e-10,
         ip_mcnstep=100,
         mcnstep=100,
+        exchange=data_dir / "jfile",
+        momfile=data_dir / "momfile",
     )
 
     with pytest.raises(RuntimeError, match="parameters are missing"):
         sim.run(out=tmp_path)
 
-    with pytest.raises(AttributeError, match=r"file \w+ not passed"):
+    with pytest.raises(AttributeError, match=r"file posfile not passed"):
         sim.run(out=tmp_path, ip_temp=50, temp=70)
-
-    data_dir = Path(uppasd.__file__).parent.parent / "data" / "0001"
 
     with pytest.raises(AttributeError, match="restartfile for initmag 4 missing"):
         sim.run(
             out=tmp_path,
             ip_temp=50,
             temp=70,
-            exchange=data_dir / "jfile",
-            momfile=data_dir / "momfile",
             posfile=data_dir / "posfile",
         )
 
@@ -167,8 +166,6 @@ def test_simulation_run(tmp_path: Path):
         out=tmp_path,
         ip_temp=50,
         temp=70,
-        exchange=data_dir / "jfile",
-        momfile=data_dir / "momfile",
         posfile=data_dir / "posfile",
         initmag=3,
     )
