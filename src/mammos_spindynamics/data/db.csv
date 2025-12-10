@@ -5,5 +5,5 @@ Nd2Fe14B,P42/mnm,136,8.78 AA,8.78 AA,12.12 AA,90 deg,90 deg,90 deg,933.42 AA^3,,
 #Ni80Fe20,?,0,NaN AA,NaN AA,NaN AA,NaN deg,NaN deg,NaN deg,NaN AA^3,,,0004,https://doi.org/10.48550/arXiv.1908.08885  # extracted visually
 Fe16N2,?,0,NaN AA,NaN AA,NaN AA,NaN deg,NaN deg,NaN deg,NaN AA^3,,,0005,Uppsala
 Ni80Fe20,Pm-3m,221,3.55 AA,3.55 AA,3.55 AA,90 deg,90 deg,90 deg,44.738875 AA^3,,,0006,https://doi.org/10.48550/arXiv.1908.08885; space group: https://doi.org/10.1016/j.physb.2023.414782
-Fe3Y,,,5.088172 AA,5.088172 AA,24.355398 AA,90 deg,90 deg,120 deg,546.071496 AA^3,,,0007,Uppsala
-Fe2.33Ta0.67Y,,,5.227483 AA,5.227483 AA,25.022642 AA,90 deg,90 deg,120 deg,592.173679 AA^3,,,0008,Uppsala
+Fe3Y,,0,5.088172 AA,5.088172 AA,24.355398 AA,90 deg,90 deg,120 deg,546.071496 AA^3,,,0007,Uppsala
+Fe2.33Ta0.67Y,,0,5.227483 AA,5.227483 AA,25.022642 AA,90 deg,90 deg,120 deg,592.173679 AA^3,,,0008,Uppsala
