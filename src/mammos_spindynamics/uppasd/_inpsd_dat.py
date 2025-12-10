@@ -78,25 +78,38 @@ def create_input_files(out: Path, **kwargs) -> tuple[str, dict[str, Path]]:
     # hard-coded names for exchange, posfile, momfile
     files_to_copy = {}
     for file_ in ["exchange", "posfile", "momfile"]:
-        try:
-            file_path = simulation_parameters.pop(file_)
-        except KeyError:
-            raise AttributeError(
-                f"Missing parameter: file {file_} not passed"
-            ) from None
-        if not isinstance(file_, str | Path):
-            raise ValueError(
-                f"Invalid type for {file_}; must be str or Path, not {type(file_path)}."
-            )
-        file_path = Path(file_path)
-        if not file_path.is_file():
-            raise ValueError(f"File '{file_path!s}' passed for {file_} does not exist")
-        files_to_copy[file_] = file_path
+        files_to_copy[file_] = external_file(simulation_parameters, file_)
 
     if simulation_parameters["initmag"] == 4:
-        raise NotImplementedError("restartfile for initmag 4 missing")
+        file_ = "restartfile"
+        if file_ not in simulation_parameters:
+            raise AttributeError("restartfile for initmag 4 missing")
+        files_to_copy[file_] = external_file(simulation_parameters, file_)
+        # restartfile needs to be passed as a whole line to the template
+        simulation_parameters["restartfile_line"] = "restartfile ./restartfile"
     else:
         simulation_parameters["restartfile_line"] = ""
     inp_file = INP_FILE_TEMPLATE.format(**serialize_parameters(simulation_parameters))
 
     return inp_file, files_to_copy
+
+
+def external_file(simulation_parameters: dict[str, Any], key: str) -> Path:
+    """Find file pased for UppASD argument key.
+
+    The key is removed from simulation_parameters, because all files have hard-coded
+    relative paths and names in the input file template.
+    """
+    try:
+        file_path = simulation_parameters.pop(key)
+    except KeyError:
+        raise AttributeError(f"Missing parameter: file {key} not passed") from None
+    if not isinstance(key, str | Path):
+        raise ValueError(
+            f"Invalid type for {key}; must be str or Path, not {type(file_path)}."
+        )
+    file_path = Path(file_path)
+    if not file_path.is_file():
+        raise ValueError(f"File '{file_path!s}' passed for {key} does not exist")
+
+    return file_path
