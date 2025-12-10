@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from textwrap import dedent
 
@@ -169,10 +170,11 @@ def test_simulation_run(tmp_path: Path):
         posfile=data_dir / "posfile",
         initmag=3,
     )
+    # TODO check simulation results once the run method provides a return value
 
 
 @pytest.mark.timeout(30)
-def test_simulation_run_with_inpsd_dat(tmp_path: Path):
+def test_simulation_run_with_modified_inpsd_dat(tmp_path: Path):
     """Start simulation from an inpsd.dat file.
 
     The file sets a large number of MC steps, which are overwritten in run. If the
@@ -230,3 +232,55 @@ def test_simulation_run_with_inpsd_dat(tmp_path: Path):
         sim.run(tmp_path / "my" / "output", ip_mcnstep=100, mcnstep=100)
 
     sim.run(tmp_path / "my" / "output", ip_mcnstep=100, mcnstep=100, T=10)
+    # TODO check simulation results once the run method provides a return value
+
+
+def test_simulation_run_with_unmodified_inpsd_dat(tmp_path: Path):
+    """Run simulation for an inpsd.dat file without any modifications.
+
+    Without *any* modifications is actually not true, the code will always rewrite
+    the lines for posfile, momfile, and exchange to guarantee that the run directory
+    is fully self-contained.
+    """
+    (tmp_path / "inpsd.dat").write_text(
+        dedent(
+            """\
+            simid UppASD__123
+
+            cell  1.000000000000000  -0.500000000182990   0.000000000000000
+                0.000000000000000   0.866011964524435   0.000000000000000
+                0.000000000000000   0.000000000000000   3.228114436804486
+
+            ncell 12  12  12
+            bc    P P P
+            sym 0
+            posfile ./posfile
+            posfiletype D
+
+            initmag 3
+            momfile ./momfile
+            maptype 2
+            exchange ./jfile
+            ip_mode M
+            ip_temp 20
+            ip_mcnstep 120
+
+            mode M
+            temp 20
+            mcnstep 120
+            plotenergy 1
+            do_proj_avrg Y
+            do_cumu Y
+
+            alat 2.6489381562e-10"""
+        )
+    )
+    data_dir = Path(uppasd.__file__).parent.parent / "data" / "0001"
+
+    for file in ["jfile", "momfile", "posfile"]:
+        shutil.copy(data_dir / file, file)
+    sim = uppasd.Simulation(
+        inpsd_dat=tmp_path / "inpsd.dat",
+    )
+    sim.run(tmp_path / "simulation-output")
+    # TODO check simulation results once the run method provides a return value
