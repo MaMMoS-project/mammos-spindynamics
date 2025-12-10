@@ -6,6 +6,13 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.2.5](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.5) – 2025-12-10
+
+### Misc
+
+- Materials Fe3Y and Fe2.33Ta0.67Y were added to the database. ([#41](https://github.com/MaMMoS-project/mammos-spindynamics/pull/41))
+
+
 ## [mammos-spindynamics 0.2.4](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.4) – 2025-12-02
 
 ### Misc
