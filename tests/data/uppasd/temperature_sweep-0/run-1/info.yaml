@@ -1,0 +1,11 @@
+metadata:
+  index: 1
+  description: ''
+  UppASD version: v6.0.2
+  mammos_spindynamics_version: 0.2.5
+  mode: run
+  time_elapsed: '23 days, 0:30:43'
+  time_end: '2025-04-08T11:04:01+02:00'
+  time_start: '2025-03-16T09:33:18+01:00'
+parameters:
+  T: 5

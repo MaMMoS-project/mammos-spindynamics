@@ -1,0 +1,13 @@
+metadata:
+  index: 0
+  description: Test sweep.
+  UppASD version: v6.0.2
+  mammos_spindynamics_version: 0.2.5
+  mode: temperature_sweep
+  time_elapsed: '23 days, 20:59:35'
+  time_end: '2025-04-08T11:04:01+02:00'
+  time_start: '2025-03-15T13:04:26+01:00'
+parameters:
+  T:
+  - 2
+  - 5
