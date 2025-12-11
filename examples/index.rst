@@ -7,5 +7,4 @@ This package provides functionality to get magnetic material properties from spi
    :maxdepth: 1
 
    quickstart
-   UppASD
 
