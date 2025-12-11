@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+from io import StringIO
 from typing import TYPE_CHECKING
 
 import mammos_entity as me
@@ -11,8 +12,6 @@ import mammos_units as u
 import numpy as np
 import pandas as pd
 import yaml
-
-from mammos_spindynamics.uppasd.inpsd import parse_inpsd_file
 
 if TYPE_CHECKING:
     import astropy
@@ -32,24 +31,17 @@ def read(out: pathlib.Path | str) -> MammosUppasdData | RunData | TemperatureSwe
             info = yaml.safe_load(f)
         if info["metadata"]["mode"] == "mammos_uppasd_data":
             return MammosUppasdData(out)
-        else:
-            mode = info["metadata"]["mode"]
-            raise RuntimeError(
-                f"Inconsistent mode name: '{mode}' in mammos_spindynamics.yaml. "
-                "It should be 'mammos_uppasd_data'."
-            )
-    elif (info_yaml := out / "info.yaml").is_file():
-        with open(info_yaml) as f:
-            info = yaml.safe_load(f)
-        if info["metadata"]["mode"] == "run":
+        elif info["metadata"]["mode"] == "run":
             return RunData(out)
         elif info["metadata"]["mode"] == "temperature_sweep":
             return TemperatureSweepData(out)
         else:
             mode = info["metadata"]["mode"]
-            raise RuntimeError(f"Cannot understand mode {mode} in info.yaml.")
+            raise RuntimeError(
+                f"Unable to understand mode: '{mode}' in mammos_spindynamics.yaml. "
+            )
     else:
-        raise RuntimeError(f"Information `yaml` file not found in path: {out}.")
+        raise RuntimeError(f"mammos_spindynamics.yaml file not found in path: {out}.")
 
 
 class MammosUppasdData:
@@ -109,13 +101,13 @@ class RunData:
     def __init__(self, out: pathlib.Path):
         """Initialize Data given the output directory of a single run."""
         self.out = pathlib.Path(out)
-        with open(self.out / "info.yaml") as f:
+        with open(self.out / "mammos_spindynamics.yaml") as f:
             info = yaml.safe_load(f)
         self.metadata = info["metadata"]
         self.parameters = info["parameters"]
         df = pd.read_csv(self.last_cumulant, sep=r"\s+", dtype=object)
         self._cumulant_data = df.iloc[-1]
-        self.input_dictionary = parse_inpsd_file(self.inpsd)
+        self.input_dictionary = _parse_inpsd_file(self.inpsd)
 
     def __repr__(self):
         """Define repr."""
@@ -230,7 +222,7 @@ class TemperatureSweepData:
     def __init__(self, out: pathlib.Path | str):
         """Initialize TemperatureSweepData given the output directory of a sweep run."""
         self.out = pathlib.Path(out)
-        with open(self.out / "info.yaml") as f:
+        with open(self.out / "mammos_spindynamics.yaml") as f:
             info = yaml.safe_load(f)
         self.metadata = info["metadata"]
         self.parameters = info["parameters"]
@@ -346,3 +338,43 @@ class TemperatureSweepData:
             Cv=self.Cv,
             # E=self.E,
         )
+
+
+def _parse_inpsd_file(inpsd_file: pathlib.Path | str) -> dict:
+    """Parse inpsd.dat file."""
+    string_parameters = {
+        "simid",
+        "exchange",
+        "momfile",
+        "posfile",
+        "restartfile",
+    }
+    float_parameters = {
+        "alat",
+        "temp",
+    }
+    with open(inpsd_file, encoding="utf-8") as file:
+        lines = file.readlines()
+    parameters = {}
+    for i, line in enumerate(lines):
+        for par in string_parameters:
+            if re.match(f"{par} .*", line):
+                parameters[par] = line.split()[1]
+        for par in float_parameters:
+            if re.match(f"{par} .*", line):
+                try:
+                    parameters[par] = float(line.split()[1])
+                except ValueError:
+                    continue
+        if re.match("(bc|BC) .*", line):
+            parameters["bc"] = line.removeprefix("bc").split()[:3]
+        if re.match("cell .*", line):
+            a = np.genfromtxt(StringIO(line.removeprefix("cell")))
+            b = np.genfromtxt(StringIO(lines[i + 1]))
+            c = np.genfromtxt(StringIO(lines[i + 2]))
+            parameters["cell"] = np.vstack((a, b, c))
+        if re.match("ncell .*", line):
+            parameters["ncell"] = np.genfromtxt(StringIO(line.removeprefix("ncell")))[
+                :3
+            ]
+    return parameters

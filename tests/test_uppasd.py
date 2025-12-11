@@ -93,7 +93,7 @@ def test_RunData_class(DATA):
 
 def test_RunData_yaml(DATA):
     """Test RunData yaml file."""
-    with open(DATA / "uppasd" / "run-0" / "info.yaml") as f:
+    with open(DATA / "uppasd" / "run-0" / "mammos_spindynamics.yaml") as f:
         info = yaml.safe_load(f)
     assert info == {
         "metadata": {
@@ -165,7 +165,9 @@ def test_TemperatureSweepData_output(DATA, tmp_path):
 
 def test_TemperatureSweepData_yaml(DATA):
     """Test TemperatureSweepData yaml file."""
-    with open(DATA / "uppasd" / "temperature_sweep-0" / "info.yaml") as f:
+    with open(
+        DATA / "uppasd" / "temperature_sweep-0" / "mammos_spindynamics.yaml"
+    ) as f:
         info = yaml.safe_load(f)
     assert info == {
         "metadata": {
