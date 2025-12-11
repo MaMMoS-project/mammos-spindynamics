@@ -26,12 +26,21 @@ def read(out: pathlib.Path | str) -> MammosUppasdData | RunData | TemperatureSwe
     if not out.is_dir():
         raise RuntimeError(f"Output directory {out} does not exist.")
 
-    if (info_yaml := out / "info.yaml").is_file():
+    if (info_yaml := out / "mammos_spindynamics.yaml").is_file():
         with open(info_yaml) as f:
             info = yaml.safe_load(f)
         if info["metadata"]["mode"] == "mammos_uppasd_data":
             return MammosUppasdData(out)
-        elif info["metadata"]["mode"] == "run":
+        else:
+            mode = info["metadata"]["mode"]
+            raise RuntimeError(
+                f"Inconsistent mode name: '{mode}' in mammos_spindynamics.yaml. "
+                "It should be 'mammos_uppasd_data'."
+            )
+    elif (info_yaml := out / "info.yaml").is_file():
+        with open(info_yaml) as f:
+            info = yaml.safe_load(f)
+        if info["metadata"]["mode"] == "run":
             return RunData(out)
         elif info["metadata"]["mode"] == "temperature_sweep":
             return TemperatureSweepData(out)
@@ -39,7 +48,7 @@ def read(out: pathlib.Path | str) -> MammosUppasdData | RunData | TemperatureSwe
             mode = info["metadata"]["mode"]
             raise RuntimeError(f"Cannot understand mode {mode} in info.yaml.")
     else:
-        raise RuntimeError(f"`info.yaml` not found in path: {out}.")
+        raise RuntimeError(f"Information `yaml` file not found in path: {out}.")
 
 
 class MammosUppasdData:
@@ -48,7 +57,7 @@ class MammosUppasdData:
     def __init__(self, out: pathlib.Path):
         """Initialize MammosUppasdData given the directory containing all runs."""
         self.out = pathlib.Path(out)
-        with open(self.out / "info.yaml") as f:
+        with open(self.out / "mammos_spindynamics.yaml") as f:
             info = yaml.safe_load(f)
         self.history = info["history"]
 
@@ -142,17 +151,17 @@ class RunData:
 
     @property
     def exchange(self) -> pathlib.Path:
-        """Get path of ``jfile`` exchange file."""
+        """Get path of file containing exchange interactions."""
         return self.out / self.input_dictionary["exchange"]
 
     @property
     def momfile(self) -> pathlib.Path:
-        """Get path of ``momfile`` file."""
+        """Get path of file containing magnetic moments."""
         return self.out / self.input_dictionary["momfile"]
 
     @property
     def posfile(self) -> pathlib.Path:
-        """Get path of ``posfile`` file."""
+        """Get path of file containing atomic positions."""
         return self.out / self.input_dictionary["posfile"]
 
     @property
@@ -196,15 +205,16 @@ class RunData:
     def Cv(self) -> mammos_entity.Entity:
         """Get specific heat capacity."""
         k_B = u.constants.k_B
-        Cv = float(self._cumulant_data["C_v(tot)"]) * k_B
+        Cv = float(self._cumulant_data["C_v(tot)"]) * k_B * self.n_magnetic_atoms
         return me.Entity("IsochoricHeatCapacity", Cv)
 
-    # @property
-    # def E(self) -> mammos_entity.Entity:
-    #     """Get energy."""
-    #     E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
-    #     return me.Entity("Energy", E, unit="J")
-    #     # TODO: "Energy" entity has wrong unit
+    @property
+    def E(self) -> mammos_entity.Entity:
+        """Get energy."""
+        # TODO: "Energy" entity has wrong unit
+        # E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
+        # return me.Entity("Energy", E, unit="J")
+        raise NotImplementedError("Energy calculation is not yet implemented.")
 
     @property
     def U_binder(self) -> float:
@@ -287,11 +297,7 @@ class TemperatureSweepData:
         """Get Isochoric Heat Capatic."""
         return me.concat_flat(*[run.Cv for run in self])
 
-    @property
-    def U_binder(self) -> numpy.ndarray:
-        """Get Binder coefficient."""
-        return np.array([run.U_binder for run in self])
-
+    # TODO: Implement more accurate heat capacity
     # @property
     # def Cv(self) -> mammos_entity.Entity:
     #     """Calculate Specific Heat Capacity more accurately.
@@ -302,6 +308,16 @@ class TemperatureSweepData:
     #     k_B = u.constants.k_B.to("mRy/K")  # Boltzmann constant in [mRy/K]
     #     Cv = np.gradient(self.E / k_B, self.T, axis=0)
     #     return me.Entity("IsochoricHeatCapacity", Cv)
+
+    @property
+    def U_binder(self) -> numpy.ndarray:
+        """Get Binder coefficient."""
+        return np.array([run.U_binder for run in self])
+
+    @property
+    def E(self) -> numpy.ndarray:
+        """Get Energy."""
+        return me.concat_flat(*[run.E for run in self])
 
     def save_output(self, out: pathlib.Path | str | None = None) -> None:
         """Save output file output.csv in directory `out`.
@@ -332,4 +348,5 @@ class TemperatureSweepData:
             Ms=self.Ms,
             U_binder=self.U_binder,
             Cv=self.Cv,
+            # E=self.E,
         )

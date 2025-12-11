@@ -46,7 +46,7 @@ def test_MammosUppasdData_class(DATA):
 
 def test_MammosUppasdData_yaml(DATA):
     """Test MammosUppasdData yaml file."""
-    with open(DATA / "uppasd" / "info.yaml") as f:
+    with open(DATA / "uppasd" / "mammos_spindynamics.yaml") as f:
         info = yaml.safe_load(f)
     assert info == {
         "history": ["temperature_sweep-0", "run-0"],
