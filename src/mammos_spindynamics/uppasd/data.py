@@ -196,15 +196,13 @@ class RunData:
     def Cv(self) -> mammos_entity.Entity:
         """Get specific heat capacity."""
         k_B = u.constants.k_B
-        Cv = float(self._cumulant_data["C_v(tot)"]) * self.n_magnetic_atoms * k_B
-        # TODO: Maybe divide by volume? - waiting for reply
+        Cv = float(self._cumulant_data["C_v(tot)"]) * k_B
         return me.Entity("IsochoricHeatCapacity", Cv)
 
     # @property
     # def E(self) -> mammos_entity.Entity:
     #     """Get energy."""
     #     E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
-    #     # TODO: correct calculation? - waiting for reply
     #     return me.Entity("Energy", E, unit="J")
     #     # TODO: "Energy" entity has wrong unit
 
