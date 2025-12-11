@@ -202,9 +202,9 @@ def _update_metadata_file(run_path: Path, start_time: str, end_time: str):
     ) - datetime.datetime.fromisoformat(start_time)
     metadata["metadata"].update(
         {
-            "start_time": start_time,
-            "end_time": end_time,
-            "elapsed_time": str(elapsed_time),
+            "time_start": start_time,
+            "time_end": end_time,
+            "time_elapsed": str(elapsed_time),
             "uppasd_git_revision": uppasd_git_revision,
         }
     )
