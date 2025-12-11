@@ -14,7 +14,6 @@ import pandas as pd
 import yaml
 
 if TYPE_CHECKING:
-    import astropy
     import mammos_entity
     import numpy
     import pandas
@@ -202,12 +201,10 @@ class RunData:
         return me.Entity("IsochoricHeatCapacity", Cv)
 
     @property
-    def E(self) -> astropy.units.Quantity:
+    def E(self) -> mammos_entity.Entity:
         """Get energy."""
         E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
-        # return me.Entity("Energy", E, unit="J")
-        # TODO: "Energy" entity has wrong unit
-        return E.to("J")
+        return me.Entity("Energy", E, unit="J")
 
     @property
     def U_binder(self) -> float:
@@ -302,10 +299,9 @@ class TemperatureSweepData:
         return np.array([run.U_binder for run in self])
 
     @property
-    def E(self) -> astropy.units.Quantity:
+    def E(self) -> mammos_entity.Entity:
         """Get Energy."""
-        E_list = [run.E.to("J").value for run in self]
-        return np.array(E_list) * u.J
+        return me.concat_flat(*[run.E for run in self])
 
     def save_output(self, out: pathlib.Path | str | None = None) -> None:
         """Save output file output.csv in directory `out`.
