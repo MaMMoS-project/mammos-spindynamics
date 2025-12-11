@@ -15,6 +15,7 @@ import yaml
 from mammos_spindynamics.uppasd.inpsd import parse_inpsd_file
 
 if TYPE_CHECKING:
+    import astropy
     import mammos_entity
     import numpy
     import pandas
@@ -209,12 +210,12 @@ class RunData:
         return me.Entity("IsochoricHeatCapacity", Cv)
 
     @property
-    def E(self) -> mammos_entity.Entity:
+    def E(self) -> astropy.units.Quantity:
         """Get energy."""
-        # TODO: "Energy" entity has wrong unit
-        # E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
+        E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
         # return me.Entity("Energy", E, unit="J")
-        raise NotImplementedError("Energy calculation is not yet implemented.")
+        # TODO: "Energy" entity has wrong unit
+        return E.to("J")
 
     @property
     def U_binder(self) -> float:
@@ -294,20 +295,14 @@ class TemperatureSweepData:
 
     @property
     def Cv(self) -> mammos_entity.Entity:
-        """Get Isochoric Heat Capatic."""
-        return me.concat_flat(*[run.Cv for run in self])
+        """Get Isochoric Heat Capacity.
 
-    # TODO: Implement more accurate heat capacity
-    # @property
-    # def Cv(self) -> mammos_entity.Entity:
-    #     """Calculate Specific Heat Capacity more accurately.
-    #
-    #     In particular, Cv is evaluated as the derivative of the energy as a function
-    #     of temperature.
-    #     """
-    #     k_B = u.constants.k_B.to("mRy/K")  # Boltzmann constant in [mRy/K]
-    #     Cv = np.gradient(self.E / k_B, self.T, axis=0)
-    #     return me.Entity("IsochoricHeatCapacity", Cv)
+        The isochorich (at constant volume) heat capacity Cv is evaluated as the
+        derivative of the energy as a function of temperature.
+        """
+        k_B = u.constants.k_B.value
+        Cv = np.gradient(self.E.value / k_B, self.T.value, axis=0)
+        return me.Entity("IsochoricHeatCapacity", Cv)
 
     @property
     def U_binder(self) -> numpy.ndarray:
@@ -315,9 +310,10 @@ class TemperatureSweepData:
         return np.array([run.U_binder for run in self])
 
     @property
-    def E(self) -> numpy.ndarray:
+    def E(self) -> astropy.units.Quantity:
         """Get Energy."""
-        return me.concat_flat(*[run.E for run in self])
+        E_list = [run.E.to("J").value for run in self]
+        return np.array(E_list) * u.J
 
     def save_output(self, out: pathlib.Path | str | None = None) -> None:
         """Save output file output.csv in directory `out`.
