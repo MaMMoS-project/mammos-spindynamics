@@ -45,9 +45,13 @@ class Simulation:
             if key not in DEFAULT_SIMULATION_PARAMETERS
         )
 
-    def create_input_files(
-        self, out: str | Path, **kwargs
-    ) -> tuple[str, dict[str, Path]]:
+    def __repr__(self):
+        args = "".join(
+            f"    {key}={val!r},\n" for key, val in self._defined_parameters().items()
+        )
+        return f"{self.__class__.__name__}(\n    inpsd_dat={self._inpsd_dat},\n{args})"
+
+    def _defined_parameters(self, **kwargs):
         if self._inpsd_dat:
             simulation_parameters = copy.copy(self._simulation_parameters_init)
             simulation_parameters.update(kwargs)
@@ -55,6 +59,10 @@ class Simulation:
             simulation_parameters = copy.copy(DEFAULT_SIMULATION_PARAMETERS)
             simulation_parameters.update(copy.copy(self._simulation_parameters_init))
             simulation_parameters.update(kwargs)
+        return simulation_parameters
+
+    def create_input_files(self, **kwargs) -> tuple[str, dict[str, Path]]:
+        simulation_parameters = self._defined_parameters(**kwargs)
 
         if T := simulation_parameters.pop("T", None):
             # convenience for the user: set both ip_temp and temp to the same value
@@ -75,7 +83,7 @@ class Simulation:
                 raise RuntimeError(
                     f"The following parameters are missing: {missing_parameters}"
                 )
-            return create_input_files(out, **simulation_parameters)
+            return create_input_files(**simulation_parameters)
 
     def run(
         self,
@@ -88,7 +96,7 @@ class Simulation:
         out = Path(out)
         uppasd_executable = _find_executable(uppasd_executable)
 
-        inp_file_content, files_to_copy = self.create_input_files(out, **kwargs)
+        inp_file_content, files_to_copy = self.create_input_files(**kwargs)
 
         run_path, index = _create_run_dir(out)
 

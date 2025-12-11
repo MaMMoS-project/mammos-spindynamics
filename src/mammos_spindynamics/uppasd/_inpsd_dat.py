@@ -84,7 +84,7 @@ def _serialise_ncell(val: Any) -> str:
     return " ".join(map(str, val))
 
 
-def create_input_files(out: Path, **kwargs) -> tuple[str, dict[str, Path]]:
+def create_input_files(**kwargs) -> tuple[str, dict[str, Path]]:
     simulation_parameters = kwargs
 
     # hard-coded names for exchange, posfile, momfile
