@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import yaml
 
-import mammos_spindynamics
 from mammos_spindynamics import uppasd
 
 
@@ -63,7 +62,7 @@ def test_RunData_class(DATA):
         "index": 1,
         "description": "Single run.",
         "UppASD version": "v6.0.2",
-        "mammos_spindynamics_version": mammos_spindynamics.__version__,
+        "mammos_spindynamics_version": "0.2.5",
         "mode": "run",
         "time_elapsed": "1 day, 1:01:01",
         "time_end": "2025-03-15T13:04:26+01:00",
@@ -122,7 +121,7 @@ def test_TemperatureSweepData_class(DATA):
         "index": 0,
         "description": "Test sweep.",
         "UppASD version": "v6.0.2",
-        "mammos_spindynamics_version": mammos_spindynamics.__version__,
+        "mammos_spindynamics_version": "0.2.5",
         "mode": "temperature_sweep",
         "time_elapsed": "23 days, 20:59:35",
         "time_end": "2025-04-08T11:04:01+02:00",
