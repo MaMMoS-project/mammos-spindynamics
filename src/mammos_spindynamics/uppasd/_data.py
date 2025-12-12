@@ -49,9 +49,6 @@ class MammosUppasdData:
     def __init__(self, out: pathlib.Path):
         """Initialize MammosUppasdData given the directory containing all runs."""
         self.out = pathlib.Path(out)
-        with open(self.out / "mammos_spindynamics.yaml") as f:
-            info = yaml.safe_load(f)
-        self.history = info["history"]
 
     def __repr__(self):
         """Define repr."""
@@ -59,13 +56,29 @@ class MammosUppasdData:
 
     def __len__(self):
         """Extract number of sub-runs."""
-        return len(self.history)
+        history_length = (
+            max(
+                [
+                    int(p.name.replace("-run", "").replace("-temperature_sweep", ""))
+                    for p in self.out.iterdir()
+                    if re.match(r"\d+-(run|temperature_sweep)", p.name)
+                ]
+            )
+            + 1
+        )
+        return history_length
 
     def __getitem__(self, idx):
         """Extract i-th run."""
-        if idx < 0 or idx >= len(self):
+        if idx >= len(self):
             raise IndexError
-        return read(self.out / self.history[idx])
+        runs_idx = [p for p in self.out.iterdir() if re.match(f"{idx}-.*", p.name)]
+        if len(runs_idx) == 0:
+            return
+            # raise IndexError(f"Directory with index {idx} missing in {self.out}.")
+        if len(runs_idx) > 1:
+            raise RuntimeError(f"Multiple directories with index {idx} in {self.out}.")
+        return read(runs_idx[0])
 
     def info(
         self,
@@ -84,13 +97,14 @@ class MammosUppasdData:
             metadata_keys += ["index"]
         all_runs = []
         for run in self:
-            info_ = {"name": run.out.name}
-            if metadata_keys:
-                metadata_ = {k: run.metadata[k] for k in metadata_keys}
-                info_ = {**info_, **metadata_}
-            if include_parameters:
-                info_ = {**info_, **run.parameters}
-            all_runs.append(info_)
+            if run:
+                info_ = {"name": run.out.name}
+                if metadata_keys:
+                    metadata_ = {k: run.metadata[k] for k in metadata_keys}
+                    info_ = {**info_, **metadata_}
+                if include_parameters:
+                    info_ = {**info_, **run.parameters}
+                all_runs.append(info_)
         return pd.DataFrame(all_runs)
 
 
@@ -102,11 +116,11 @@ class RunData:
         self.out = pathlib.Path(out)
         with open(self.out / "mammos_spindynamics.yaml") as f:
             info = yaml.safe_load(f)
+        self._input_dictionary = _parse_inpsd_file(self.inpsd)
         self.metadata = info["metadata"]
         self.parameters = info["parameters"]
-        df = pd.read_csv(self.last_cumulant, sep=r"\s+", dtype=object)
+        df = pd.read_csv(self.cumulants, sep=r"\s+", dtype=object)
         self._cumulant_data = df.iloc[-1]
-        self.input_dictionary = _parse_inpsd_file(self.inpsd)
 
     def __repr__(self):
         """Define repr."""
@@ -120,21 +134,22 @@ class RunData:
         include_parameters: bool = True,
     ) -> pandas.DataFrame:
         """Return information about the UppASD run."""
-        out = {"name": self.out.name}
+        out = {"name": [self.out.name]}
         if include_description:
-            out["description"] = self.metadata["description"]
+            out["description"] = [self.metadata["description"]]
         if include_elapsed_time:
-            out["time_elapsed"] = self.metadata["time_elapsed"]
+            out["time_elapsed"] = [self.metadata["time_elapsed"]]
         if include_index:
-            out["index"] = self.metadata["index"]
+            out["index"] = [self.metadata["index"]]
         if include_parameters:
-            out = {**out, **self.parameters}
-        return out
+            parameters_dictionary = {k: [v] for k, v in self.parameters.items()}
+            out = {**out, **parameters_dictionary}
+        return pd.DataFrame(out)
 
     @property
     def T(self) -> float:
         """Get Thermodynamics Temperature."""
-        return me.T(self.input_dictionary["temp"])
+        return me.T(self._input_dictionary["temp"])
 
     @property
     def inpsd(self) -> pathlib.Path:
@@ -144,36 +159,28 @@ class RunData:
     @property
     def exchange(self) -> pathlib.Path:
         """Get path of file containing exchange interactions."""
-        return self.out / self.input_dictionary["exchange"]
+        return self.out / self._input_dictionary["exchange"]
 
     @property
     def momfile(self) -> pathlib.Path:
         """Get path of file containing magnetic moments."""
-        return self.out / self.input_dictionary["momfile"]
+        return self.out / self._input_dictionary["momfile"]
 
     @property
     def posfile(self) -> pathlib.Path:
         """Get path of file containing atomic positions."""
-        return self.out / self.input_dictionary["posfile"]
+        return self.out / self._input_dictionary["posfile"]
 
     @property
-    def last_cumulant(self) -> pathlib.Path:
-        """Get last ``cumulant*.out`` file."""
-        cumulant_files = [
-            f for f in self.out.iterdir() if re.match("cumulant.*.out", f.name)
-        ]
-        if not cumulant_files:
-            raise ValueError(
-                f"No cumulant files found in the output directory  {self.out}."
-            )
-        else:
-            cumulant_files.sort()
-            return pathlib.Path(cumulant_files[-1])
+    def cumulants(self) -> pathlib.Path:
+        """Get ``cumulants.*.out`` file."""
+        name = self._input_dictionary.get("simid", "_UppASD_")
+        return self.out / f"cumulants.{name}.out"
 
     @property
     def restartfile(self) -> pathlib.Path:
         """Get path of restart file."""
-        name = self.input_dictionary.get("simid", "_UppASD_")
+        name = self._input_dictionary.get("simid", "_UppASD_")
         return self.out / f"restart.{name}.out"
 
     @property
@@ -186,8 +193,8 @@ class RunData:
     @property
     def Ms(self) -> mammos_entity.Entity:
         """Get Spontaneous Magnetization."""
-        cell = self.input_dictionary["cell"]
-        lattice_const = self.input_dictionary["alat"] * u.m
+        cell = self._input_dictionary["cell"]
+        lattice_const = self._input_dictionary["alat"] * u.m
         cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
         Ms_mu_B_per_atom = float(self._cumulant_data["<M>"]) * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / cell_volume
@@ -234,9 +241,9 @@ class TemperatureSweepData:
 
     def __getitem__(self, idx):
         """Extract i-th sub-run."""
-        if idx < 0 or idx >= len(self):
+        if idx >= len(self):
             raise IndexError
-        return RunData(self.out / f"run-{idx}")
+        return RunData(self.out / f"{idx}-run")
 
     def info(
         self,
@@ -264,8 +271,11 @@ class TemperatureSweepData:
             all_runs.append(info_)
         return pd.DataFrame(all_runs)
 
-    def sel(self, **kwargs):
-        """Select run satisfying certain filters defined in the keyword arguments."""
+    def get(self, **kwargs) -> RunData:
+        """Select run satisfying certain filters defined in the keyword arguments.
+
+        If there are multiple matches, it returns the first one.
+        """
         df = self.info()
         for key, val in kwargs.items():
             df = df[df[key] == val]
@@ -273,7 +283,7 @@ class TemperatureSweepData:
         return RunData(self.out / label)
 
     @property
-    def T(self) -> float:
+    def T(self) -> mammos_entity.Entity:
         """Get Thermodynamics Temperature."""
         return me.concat_flat(*[run.T for run in self])
 
@@ -303,25 +313,26 @@ class TemperatureSweepData:
         """Get Energy."""
         return me.concat_flat(*[run.E for run in self])
 
-    def save_output(self, out: pathlib.Path | str | None = None) -> None:
-        """Save output file output.csv in directory `out`.
+    def save_output(self, out: pathlib.Path | str) -> None:
+        """Save output files M(T) and output.csv in directory `out`.
 
-        The file `output.csv` is generated from :py:mod:`mammos_entity.io` and includes
-        information like temperature, magnetization, Binder cumulant and heat capacity.
+        `M(T)` contains all information evaluated from the cumulant files.
+        `output.csv` contains entities for information temperature,
+        magnetization, Binder cumulant and heat capacity.
         """
         if out is None:
             out = self.out
         out = pathlib.Path(out)
         out.mkdir(parents=True, exist_ok=True)
 
-        with open(self[0].last_cumulant) as f:
+        with open(self[0].cumulants) as f:
             lines = f.readlines()
         header = lines[0]
 
         with open(out / "M(T)", "w") as f:
             f.write(f"{'T':>5} {header}")
             for run in self:
-                with open(run.last_cumulant) as f_run:
+                with open(run.cumulants) as f_run:
                     lines = f_run.readlines()
                 f.write(f"{run.T.value:>5.0f} {lines[-1]}")
 

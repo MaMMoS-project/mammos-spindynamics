@@ -19,11 +19,11 @@ def test_read_function(DATA):
     """
     mammos_uppasd_data = uppasd.read(DATA / "uppasd")
     assert isinstance(mammos_uppasd_data, uppasd.MammosUppasdData)
-    run_data = uppasd.read(DATA / "uppasd" / "run-0")
+    run_data = uppasd.read(DATA / "uppasd" / "1-run")
     assert isinstance(run_data, uppasd.RunData)
-    temperature_sweep_data = uppasd.read(DATA / "uppasd" / "temperature_sweep-0")
+    temperature_sweep_data = uppasd.read(DATA / "uppasd" / "0-temperature_sweep")
     assert isinstance(temperature_sweep_data, uppasd.TemperatureSweepData)
-    sub_run_data = uppasd.read(DATA / "uppasd" / "temperature_sweep-0" / "run-0")
+    sub_run_data = uppasd.read(DATA / "uppasd" / "0-temperature_sweep" / "0-run")
     assert isinstance(sub_run_data, uppasd.RunData)
 
 
@@ -33,7 +33,7 @@ def test_MammosUppasdData_class(DATA):
     assert mammos_uppasd_data.out == pathlib.Path(DATA / "uppasd")
     info_df = pd.DataFrame(
         {
-            "name": ["temperature_sweep-0", "run-0"],
+            "name": ["0-temperature_sweep", "1-run"],
             "description": ["Test sweep.", "Single run."],
             "time_elapsed": ["23 days, 20:59:35", "1 day, 1:01:01"],
             "T": [[2, 5], 10],
@@ -49,18 +49,17 @@ def test_MammosUppasdData_yaml(DATA):
     with open(DATA / "uppasd" / "mammos_spindynamics.yaml") as f:
         info = yaml.safe_load(f)
     assert info == {
-        "history": ["temperature_sweep-0", "run-0"],
         "metadata": {"mode": "mammos_uppasd_data"},
     }
 
 
 def test_RunData_class(DATA):
     """Test RunData class."""
-    run_dir = DATA / "uppasd" / "run-0"
+    run_dir = DATA / "uppasd" / "1-run"
     run_data = uppasd.read(run_dir)
     assert run_data.out == pathlib.Path(run_dir)
     assert run_data.metadata == {
-        "index": 0,
+        "index": 1,
         "description": "Single run.",
         "UppASD version": "v6.0.2",
         "mammos_spindynamics_version": mammos_spindynamics.__version__,
@@ -71,33 +70,36 @@ def test_RunData_class(DATA):
     }
     assert run_data.parameters == {"T": 10}
 
-    info_dict = {
-        "name": "run-0",
-        "description": "Single run.",
-        "time_elapsed": "1 day, 1:01:01",
-        "T": 10,
-    }
-    assert info_dict == run_data.info()
+    info_df = pd.DataFrame(
+        {
+            "name": ["1-run"],
+            "description": ["Single run."],
+            "time_elapsed": ["1 day, 1:01:01"],
+            "T": [10],
+        }
+    )
+    assert info_df.equals(run_data.info())
     assert me.T(10) == run_data.T
     assert me.Ms(6834.473593675746) == run_data.Ms
-    assert me.Entity("IsochoricHeatCapacity") == run_data.Cv
+    assert me.Entity("IsochoricHeatCapacity", 0) == run_data.Cv
+    assert me.Entity("Energy", 0) == run_data.E
     assert run_data.U_binder == 0.512274383
     assert run_data.inpsd == pathlib.Path(run_dir / "inpsd.dat")
     assert run_data.exchange == pathlib.Path(run_dir / "jfile")
     assert run_data.momfile == pathlib.Path(run_dir / "momfile")
     assert run_data.posfile == pathlib.Path(run_dir / "posfile")
-    assert run_data.last_cumulant == pathlib.Path(run_dir / "cumulants.bccFe100.out")
+    assert run_data.cumulants == pathlib.Path(run_dir / "cumulants.bccFe100.out")
     assert run_data.restartfile == pathlib.Path(run_dir / "restart.bccFe100.out")
     assert run_data.n_magnetic_atoms == 9
 
 
 def test_RunData_yaml(DATA):
     """Test RunData yaml file."""
-    with open(DATA / "uppasd" / "run-0" / "mammos_spindynamics.yaml") as f:
+    with open(DATA / "uppasd" / "1-run" / "mammos_spindynamics.yaml") as f:
         info = yaml.safe_load(f)
     assert info == {
         "metadata": {
-            "index": 0,
+            "index": 1,
             "description": "Single run.",
             "UppASD version": "v6.0.2",
             "mammos_spindynamics_version": "0.2.5",
@@ -112,7 +114,7 @@ def test_RunData_yaml(DATA):
 
 def test_TemperatureSweepData_class(DATA):
     """Test TemperatureSweepData class."""
-    sweep_dir = DATA / "uppasd" / "temperature_sweep-0"
+    sweep_dir = DATA / "uppasd" / "0-temperature_sweep"
     sweep_data = uppasd.read(sweep_dir)
     assert sweep_data.out == pathlib.Path(sweep_dir)
     assert sweep_data.metadata == {
@@ -129,7 +131,7 @@ def test_TemperatureSweepData_class(DATA):
 
     info_df = pd.DataFrame(
         {
-            "name": ["run-0", "run-1"],
+            "name": ["0-run", "1-run"],
             "description": ["", ""],
             "time_elapsed": ["20:28:52", "23 days, 0:30:43"],
             "T": [2, 5],
@@ -137,20 +139,22 @@ def test_TemperatureSweepData_class(DATA):
     )
     assert info_df.equals(sweep_data.info())
 
-    assert sweep_data.sel(T=2).out == sweep_dir / "run-0"
+    assert sweep_data.get(T=2).out == sweep_dir / "0-run"
 
     T = me.T([2, 5])
     Ms = me.Ms([6781.89022085, 6810.43736377])
     Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
+    E = me.Entity("Energy", [0, 0])
     U_binder = np.array([0.50682319, 0.50969701])
     assert T == sweep_data.T
     assert Ms == sweep_data.Ms
     assert Cv == sweep_data.Cv
+    assert E == sweep_data.E
     assert np.allclose(U_binder, sweep_data.U_binder)
 
 
 def test_TemperatureSweepData_output(DATA, tmp_path):
-    sweep_data = uppasd.read(DATA / "uppasd" / "temperature_sweep-0")
+    sweep_data = uppasd.read(DATA / "uppasd" / "0-temperature_sweep")
     sweep_data.save_output(tmp_path)
     collection = me.io.entities_from_file(tmp_path / "output.csv")
     T = me.T([2, 5])
@@ -166,7 +170,7 @@ def test_TemperatureSweepData_output(DATA, tmp_path):
 def test_TemperatureSweepData_yaml(DATA):
     """Test TemperatureSweepData yaml file."""
     with open(
-        DATA / "uppasd" / "temperature_sweep-0" / "mammos_spindynamics.yaml"
+        DATA / "uppasd" / "0-temperature_sweep" / "mammos_spindynamics.yaml"
     ) as f:
         info = yaml.safe_load(f)
     assert info == {
