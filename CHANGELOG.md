@@ -6,6 +6,13 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.2.6](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.6) – 2025-12-12
+
+### Fixed
+
+- Fixed header of `M.csv` for Fe3Y and Fe2.33Ta0.67Y. ([#45](https://github.com/MaMMoS-project/mammos-spindynamics/pull/45))
+
+
 ## [mammos-spindynamics 0.2.5](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.5) – 2025-12-10
 
 ### Misc
