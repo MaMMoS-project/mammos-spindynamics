@@ -15,7 +15,7 @@ posfile     ./posfile
 posfiletype {posfiletype}
 momfile     ./momfile
 maptype     {maptype}
-exchange    ./jfile
+exchange    ./exchange
 
 initmag {initmag}
 {restartfile_line}

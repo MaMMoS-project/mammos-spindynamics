@@ -1,5 +1,8 @@
+import collections
 import copy
 import datetime
+import numbers
+import re
 import shutil
 import string
 import subprocess
@@ -7,10 +10,12 @@ import warnings
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import yaml
 
 import mammos_spindynamics
 
+from . import _data
 from ._inpsd_dat import INP_FILE_TEMPLATE, create_input_files, preprocess_inpsd_dat
 
 DEFAULT_SIMULATION_PARAMETERS = {
@@ -88,11 +93,17 @@ class Simulation:
     def run(
         self,
         out: str | Path,
-        comment="",
-        uppasd_executable="uppasd",
-        verbosity=1,
+        description: str = "",
+        uppasd_executable: str | Path = "uppasd",
+        verbosity: int = 1,
         **kwargs,
-    ):
+    ) -> _data.RunData:
+        """Run a single UppASD simulation.
+
+        TODO details
+        """
+        # private method to allow for additional arguments when called from
+        # temperature_sweep
         out = Path(out)
         uppasd_executable = _find_executable(uppasd_executable)
 
@@ -104,7 +115,7 @@ class Simulation:
             "metadata": {
                 "mammos_spindynamics_version": mammos_spindynamics.__version__,
                 "mode": "run",
-                "comment": comment,
+                "description": description,
                 "index": index,
             },
             "parameters": {key: str(value) for key, value in kwargs.items()},
@@ -124,24 +135,93 @@ class Simulation:
             print(f" simulation finished, took {elapsed_time!s}")
 
         _update_metadata_file(run_path, start_time, end_time)
-        # return uppasd.read(run_dir)
+        return _data.RunData(run_path)
+
+    def temperature_sweep(
+        self,
+        T: collections.abc.Iterable[numbers.Number],
+        out: str | Path,
+        restart_with_previous: bool = True,
+        description: str = "",
+        uppasd_executable: str | Path = "uppasd",
+        verbosity: int = 1,
+        **kwargs,
+    ) -> _data.TemperatureSweepData:
+        """Run temperature sweep."""
+        run_path, index = _create_run_dir(Path(out), mode="temperature_sweep")
+
+        # convert any form of T to a list of T values
+        Ts = np.asanyarray(T).tolist()
+
+        metadata = {
+            "metadata": {
+                "description": description,
+                "index": index,
+                "mode": "temperature_sweep",
+            },
+            "parameters": {
+                "T": Ts,
+                **{key: str(value) for key, value in kwargs.items()},
+            },
+        }
+        with open(run_path / "mammos_spindynamics.yaml", "w") as f:
+            yaml.dump(metadata, f)
+
+        if verbosity >= 1:
+            print(
+                f"Running simulations for {len(Ts)} different temperatures:\n    {Ts!s}"
+            )
+
+        # run first simulation with default options; later simulations optionally with
+        # restarting from previous
+        run_data = self.run(
+            T=Ts[0],
+            out=run_path,
+            uppasd_executable=uppasd_executable,
+            verbosity=verbosity - 1,
+            **kwargs,
+        )
+        for T_ in Ts[1:]:
+            if restart_with_previous:
+                kwargs.update({"initmag": 4, "restartfile": run_data.restartfile})
+            run_data = self.run(
+                T=T_,
+                out=run_path,
+                uppasd_executable=uppasd_executable,
+                verbosity=verbosity - 1,
+                **kwargs,
+            )
+
+        result = _data.TemperatureSweepData(run_path)
+        result.save_output(run_path)
+        return result
 
 
-def _create_run_dir(base: Path) -> tuple[Path, int]:
+def _create_run_dir(base: Path, mode="run") -> tuple[Path, int]:
+    if mode not in ["run", "temperature_sweep"]:
+        raise ValueError(
+            f"Mode {mode} not supported, must be 'run' or 'temperature_sweep'"
+        )
+
     if not base.exists():
         base.mkdir(parents=True)
     elif base.is_file():
         raise RuntimeError(f"The path '{base}' passed as output directory is a file.")
 
-    if existing_runs := list(base.glob("run-*")):
-        max_run_counter = max(
-            int(run.name.removeprefix("run-")) for run in existing_runs
-        )
-        next_index = max_run_counter + 1
-    else:
-        next_index = 0
+    if not (base / "mammos_spindynamics.yaml").exists():
+        with open(base / "mammos_spindynamics.yaml", "w") as f:
+            yaml.dump({"metadata": {"mode": "mammos_uppasd_data"}}, f)
 
-    next_run_path = base / f"run-{next_index}"
+    run_indices = [
+        int(p.name.split("-")[0])
+        for p in base.glob("*")
+        if re.match(r"^\d+-(run|temperature_sweep)$", p.name)
+    ]
+    next_index = max(run_indices) + 1 if run_indices else 0
+
+    next_run_path = base / f"{next_index}-{mode}"
+    # The next call would fail if the directory exists already. This should never
+    # happen. We can rely on it as additional safety-check to not overwrite anything.
     next_run_path.mkdir()
     return next_run_path, next_index
 

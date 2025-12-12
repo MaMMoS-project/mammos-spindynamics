@@ -51,26 +51,45 @@ def test_create_run_dir(tmp_path: Path):
     If runs exist in the directory the index is increased
     """
     path, index = _simulation._create_run_dir(tmp_path)
-    assert path == tmp_path / "run-0"
+    assert path == tmp_path / "0-run"
     assert index == 0
 
     path, index = _simulation._create_run_dir(tmp_path)
-    assert path == tmp_path / "run-1"
+    assert path == tmp_path / "1-run"
     assert index == 1
 
+    path, index = _simulation._create_run_dir(tmp_path, mode="temperature_sweep")
+    assert path == tmp_path / "2-temperature_sweep"
+    assert index == 2
+
+    (tmp_path / "3-some-other-file").touch()
+
+    path, index = _simulation._create_run_dir(tmp_path)
+    assert path == tmp_path / "3-run"
+    assert index == 3
+
+    with pytest.raises(ValueError):
+        _simulation._create_run_dir(tmp_path, mode="unsupported")
+
     path, index = _simulation._create_run_dir(tmp_path / "out")
-    assert path == tmp_path / "out" / "run-0"
+    assert path == tmp_path / "out" / "0-run"
     assert index == 0
 
-    (tmp_path / "out" / "run-1").touch()
+    (tmp_path / "out" / "1-run").touch()
 
     path, index = _simulation._create_run_dir(tmp_path / "out")
-    assert path == tmp_path / "out" / "run-2"
+    assert path == tmp_path / "out" / "2-run"
     assert index == 2
 
     (tmp_path / "a_file").touch()
     with pytest.raises(RuntimeError):
         path, index = _simulation._create_run_dir(tmp_path / "a_file")
+
+    path, index = _simulation._create_run_dir(
+        tmp_path / "out2", mode="temperature_sweep"
+    )
+    assert path == tmp_path / "out2" / "0-temperature_sweep"
+    assert index == 0
 
 
 def test_write_inputs(tmp_path: Path):
