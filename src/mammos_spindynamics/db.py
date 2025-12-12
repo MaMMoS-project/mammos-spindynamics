@@ -513,3 +513,47 @@ def _describe_material(
             OQMD_label: {material.OQMD_label}
             """
     )
+
+
+class MaterialData:
+    """An object providing access to the files distributed in the database."""
+
+    def __init__(self, data_entry: pd.DataFrame):
+        """Find available files and make them available as public attributes."""
+        self.info = data_entry
+        self._available_files = []
+        data_dir = DATA_DIR / data_entry["label"].item()
+        for file in data_dir.glob("*"):
+            if file.name == "M.csv":
+                name = "magnetization_data"
+                value = get_spontaneous_magnetization(
+                    data_entry["chemical_formula"].item()
+                )
+            else:
+                name = file.name
+                value = file.resolve()
+                self._available_files.append(name)
+            if hasattr(self, name):
+                raise RuntimeError(f"Multiple files for {name}")
+            setattr(self, name, value)
+
+    def _repr_html_(self) -> str:
+        return self.info._repr_html_()
+
+    @property
+    def available_files(self) -> list[str]:
+        """List of available files for this material."""
+        return self._available_files
+
+
+def get_material(chemical_formula) -> MaterialData:
+    """Get files for a given material."""
+    candidates = find_materials(chemical_formula=chemical_formula)
+    if len(candidates) == 0:
+        raise ValueError(f"Material {chemical_formula} not in database.")
+    elif len(candidates) > 1:
+        raise ValueError(
+            f"Found multiple options for {chemical_formula}:\n{candidates}"
+        )
+
+    return MaterialData(candidates)
