@@ -80,6 +80,7 @@ ruff = "*"
 towncrier = "*"
 
 [tool.pixi.pypi-dependencies]
+mammos-analysis = "*"
 mammos-spindynamics = { path = ".", editable = true }
 
 [tool.pixi.tasks]

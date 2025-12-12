@@ -1,0 +1,59 @@
+simid bccFe100                                    
+ncell     25       25      25                System size            
+BC        P         P         P                 Boundary conditions (0=vacuum, P=periodic)
+cell          5.0575886562   -2.9200001721    0.0000000000
+              0.0000000000    5.8400003443    0.0000000000
+              0.0000000000    0.0000000000    3.5140002072
+Sym       0                                     Symmetry of lattice (0 for no, 1 for cubic, 2 for 2d cubic, 3 for hexagonal)
+
+posfile   ./posfile
+posfiletype D
+momfile   ./momfile
+exchange  ./jfile
+#anisotropy ./kfile
+
+do_ralloy 0
+Mensemble 1
+tseed 4499
+maptype 3
+
+SDEalgh   1                                     SDE solver: 1=midpoint, 2=heun, 3=heun3, 4=Heun_proper, 5=Depondt
+Initmag   3                                     Initial config of moments (1=random, 2=cone, 3=spec., 4=file)
+#restartfile ./restart.bccFe100.out
+
+ip_mode   M                                     Initial phase parameters
+ip_mcanneal 1                                 --
+1200 10 1.00e-16 0.3                      --
+
+mode      M                                     S=SD, M=MC
+temp 10
+mcNstep 700
+damping 0.1
+timestep 1.0e-16
+
+do_avrg   Y                                     Measure averages
+
+do_cumu Y
+cumu_step 50
+cumu_buff 10
+
+do_tottraj N                                    Measure moments
+tottraj_step   1000
+
+plotenergy 1
+
+do_sc C
+do_ams Y
+do_magdos Y
+magdos_freq 200
+magdos_sigma 30
+qpoints C
+
+do_stiffness Y
+eta_max 12
+eta_min 6
+alat 1.00e-10
+
+do_prnstruct 1
+do_tottraj Y
+do_proj_avrg Y
