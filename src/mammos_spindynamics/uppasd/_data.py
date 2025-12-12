@@ -119,7 +119,7 @@ class RunData:
         self._input_dictionary = _parse_inpsd_file(self.inpsd)
         self.metadata = info["metadata"]
         self.parameters = info["parameters"]
-        df = pd.read_csv(self.cumulants, sep=r"\s+", dtype=object)
+        df = pd.read_csv(self.cumulants, sep=r"\s+")  # , dtype=object)
         self._cumulant_data = df.iloc[-1]
 
     def __repr__(self):
@@ -243,7 +243,10 @@ class TemperatureSweepData:
         """Extract i-th sub-run."""
         if idx >= len(self):
             raise IndexError
-        return RunData(self.out / f"{idx}-run")
+        if (run_path := self.out / f"{idx}-run").is_dir():
+            return RunData(run_path)
+        else:
+            return
 
     def info(
         self,
@@ -262,13 +265,14 @@ class TemperatureSweepData:
             metadata_keys += ["index"]
         all_runs = []
         for run in self:
-            info_ = {"name": run.out.name}
-            if metadata_keys:
-                metadata_ = {k: run.metadata[k] for k in metadata_keys}
-                info_ = {**info_, **metadata_}
-            if include_parameters:
-                info_ = {**info_, **run.parameters}
-            all_runs.append(info_)
+            if run:
+                info_ = {"name": run.out.name}
+                if metadata_keys:
+                    metadata_ = {k: run.metadata[k] for k in metadata_keys}
+                    info_ = {**info_, **metadata_}
+                if include_parameters:
+                    info_ = {**info_, **run.parameters}
+                all_runs.append(info_)
         return pd.DataFrame(all_runs)
 
     def get(self, **kwargs) -> RunData:
@@ -285,12 +289,12 @@ class TemperatureSweepData:
     @property
     def T(self) -> mammos_entity.Entity:
         """Get Thermodynamics Temperature."""
-        return me.concat_flat(*[run.T for run in self])
+        return me.concat_flat(*[run.T for run in self if run])
 
     @property
     def Ms(self) -> mammos_entity.Entity:
         """Get Spontaneous Magnetization."""
-        return me.concat_flat(*[run.Ms for run in self])
+        return me.concat_flat(*[run.Ms for run in self if run])
 
     @property
     def Cv(self) -> mammos_entity.Entity:
@@ -306,12 +310,12 @@ class TemperatureSweepData:
     @property
     def U_binder(self) -> numpy.ndarray:
         """Get Binder coefficient."""
-        return np.array([run.U_binder for run in self])
+        return np.array([run.U_binder for run in self if run])
 
     @property
     def E(self) -> mammos_entity.Entity:
         """Get Energy."""
-        return me.concat_flat(*[run.E for run in self])
+        return me.concat_flat(*[run.E for run in self if run])
 
     def save_output(self, out: pathlib.Path | str) -> None:
         """Save output files M(T) and output.csv in directory `out`.
@@ -320,8 +324,6 @@ class TemperatureSweepData:
         `output.csv` contains entities for information temperature,
         magnetization, Binder cumulant and heat capacity.
         """
-        if out is None:
-            out = self.out
         out = pathlib.Path(out)
         out.mkdir(parents=True, exist_ok=True)
 
@@ -332,9 +334,10 @@ class TemperatureSweepData:
         with open(out / "M(T)", "w") as f:
             f.write(f"{'T':>5} {header}")
             for run in self:
-                with open(run.cumulants) as f_run:
-                    lines = f_run.readlines()
-                f.write(f"{run.T.value:>5.0f} {lines[-1]}")
+                if run:
+                    with open(run.cumulants) as f_run:
+                        lines = f_run.readlines()
+                    f.write(f"{run.T.value:>5.0f} {lines[-1]}")
 
         me.io.entities_to_file(
             out / "output.csv",
