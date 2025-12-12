@@ -96,16 +96,24 @@ class MammosUppasdData:
         if include_index:
             metadata_keys += ["index"]
         all_runs = []
+        index = []
         for run in self:
             if run:
                 info_ = {"name": run.out.name}
+                index.append(
+                    int(
+                        run.out.name.replace("-run", "").replace(
+                            "-temperature_sweep", ""
+                        )
+                    )
+                )
                 if metadata_keys:
                     metadata_ = {k: run.metadata[k] for k in metadata_keys}
                     info_ = {**info_, **metadata_}
                 if include_parameters:
                     info_ = {**info_, **run.parameters}
                 all_runs.append(info_)
-        return pd.DataFrame(all_runs)
+        return pd.DataFrame(all_runs, index=index)
 
 
 class RunData:
@@ -264,16 +272,24 @@ class TemperatureSweepData:
         if include_index:
             metadata_keys += ["index"]
         all_runs = []
+        index = []
         for run in self:
             if run:
                 info_ = {"name": run.out.name}
+                index.append(
+                    int(
+                        run.out.name.replace("-run", "").replace(
+                            "-temperature_sweep", ""
+                        )
+                    )
+                )
                 if metadata_keys:
                     metadata_ = {k: run.metadata[k] for k in metadata_keys}
                     info_ = {**info_, **metadata_}
                 if include_parameters:
                     info_ = {**info_, **run.parameters}
                 all_runs.append(info_)
-        return pd.DataFrame(all_runs)
+        return pd.DataFrame(all_runs, index=index)
 
     def get(self, **kwargs) -> RunData:
         """Select run satisfying certain filters defined in the keyword arguments.

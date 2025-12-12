@@ -37,7 +37,8 @@ def test_MammosUppasdData_class(DATA):
             "description": ["Test sweep.", "Single run."],
             "time_elapsed": ["23 days, 20:59:35", "1 day, 1:01:01"],
             "T": [[2, 5], 10],
-        }
+        },
+        index=[0, 1],
     )
     assert info_df.equals(mammos_uppasd_data.info())
     assert isinstance(mammos_uppasd_data[0], uppasd.TemperatureSweepData)
@@ -135,7 +136,8 @@ def test_TemperatureSweepData_class(DATA):
             "description": ["", ""],
             "time_elapsed": ["20:28:52", "23 days, 0:30:43"],
             "T": [2, 5],
-        }
+        },
+        index=[0, 1],
     )
     assert info_df.equals(sweep_data.info())
 
