@@ -2,6 +2,8 @@
 
 import importlib.metadata
 
-from mammos_spindynamics import db as db
+from mammos_spindynamics import db, uppasd
+
+__all__ = ["db", "uppasd"]
 
 __version__ = importlib.metadata.version(__package__)
