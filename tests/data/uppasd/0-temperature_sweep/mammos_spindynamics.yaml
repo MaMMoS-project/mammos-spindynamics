@@ -1,0 +1,10 @@
+metadata:
+  index: 0
+  description: Test sweep.
+  UppASD version: v6.0.2
+  mammos_spindynamics_version: 0.2.5
+  mode: temperature_sweep
+parameters:
+  T:
+  - 2
+  - 5
