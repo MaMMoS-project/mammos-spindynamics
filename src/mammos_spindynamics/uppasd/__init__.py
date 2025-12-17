@@ -7,9 +7,12 @@ from mammos_spindynamics.uppasd._data import (
     read,
 )
 
+from ._simulation import Simulation
+
 __all__ = [
     "MammosUppasdData",
     "RunData",
+    "Simulation",
     "TemperatureSweepData",
     "read",
 ]
