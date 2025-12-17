@@ -6,6 +6,14 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.3.0](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.3.0) – 2025-12-17
+
+### Added
+
+- Python interface for UppASD. ([#43](https://github.com/MaMMoS-project/mammos-spindynamics/pull/43))
+- Implement Data classes to parse UppASD output. ([#42](https://github.com/MaMMoS-project/mammos-spindynamics/pull/42))
+
+
 ## [mammos-spindynamics 0.2.6](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.2.6) – 2025-12-12
 
 ### Fixed
