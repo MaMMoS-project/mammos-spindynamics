@@ -70,7 +70,10 @@ class MammosUppasdData:
         for key, value in kwargs.items():
             df = df[df[key] == value]
         if len(df) == 0:
-            raise LookupError("Requested material not found in database.")
+            raise LookupError(
+                f"Requested run not found.\nSelection: {kwargs}\n"
+                f"Available data: {self.info()}"
+            )
         if len(df) > 1:
             error_string = (
                 "Too many results. Please refine your search.\n"
@@ -297,7 +300,10 @@ class TemperatureSweepData:
         for key, val in kwargs.items():
             df = df[df[key] == val]
         if len(df) == 0:
-            raise LookupError("Requested material not found in database.")
+            raise LookupError(
+                f"Requested run not found.\nSelection: {kwargs}\n"
+                f"Available data: {self.info()}"
+            )
         if len(df) > 1:
             error_string = (
                 "Too many results. Please refine your search.\n"
