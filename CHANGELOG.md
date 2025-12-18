@@ -6,6 +6,14 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.3.1](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.3.1) – 2025-12-18
+
+### Fixed
+
+- Indexing of `TemperatureSweepData` sub-runs. ([#54](https://github.com/MaMMoS-project/mammos-spindynamics/pull/54))
+- Set the available number of `OMP_NUM_THREADS` in the notebooks run on Binder. ([#55](https://github.com/MaMMoS-project/mammos-spindynamics/pull/55))
+
+
 ## [mammos-spindynamics 0.3.0](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.3.0) – 2025-12-17
 
 ### Added
