@@ -257,6 +257,7 @@ class TemperatureSweepData:
             for run_dir in self.out.iterdir()
             if re.match(r"\d+-run", run_dir.name)
         ]
+        runs.sort(key=lambda x: int(x.name.split("-")[0]))
         return read(runs[idx])
 
     def info(
