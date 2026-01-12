@@ -1,4 +1,20 @@
-"""UppASD Data class."""
+"""UppASD Data module.
+
+This module finds, parse and operates on data generated from the UppASD software.
+
+The :py:func:`~mammos_spindynamics.uppasd.read` function can be used to parse any of
+three possible directories:
+
+- :py:class:`~mammos_spindynamics.uppasd.MammosUppasdData` is the base directory where
+  all sweeps and runs are found.
+- :py:class:`~mammos_spindynamics.uppasd.TemperatureSweepData` is the output directory
+  of a temperature sweep.
+- :py:class:`~mammos_spindynamics.uppasd.RunData` is the output directory of a single
+  run.
+
+The :py:func:`~mammos_spindynamics.uppasd.read` function loads data lazily, only parsing
+the type of the output directory initially.
+"""
 
 from __future__ import annotations
 
