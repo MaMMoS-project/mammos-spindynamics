@@ -10,7 +10,6 @@ import mammos_entity as me
 import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas
 import pandas as pd
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
@@ -18,6 +17,7 @@ from rich import print
 
 if TYPE_CHECKING:
     import matplotlib
+    import pandas
 
 DATA_DIR = pathlib.Path(__file__).parent / "data"
 
