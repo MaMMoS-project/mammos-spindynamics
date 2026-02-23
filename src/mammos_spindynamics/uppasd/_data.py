@@ -213,7 +213,7 @@ class RunData:
         cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
         Ms_mu_B_per_atom = float(self._cumulant_data["<M>"]) * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / cell_volume
-        return me.Ms(Ms, unit="A/m")
+        return me.Ms(Ms, unit="kA/m")
 
     @property
     def Cv(self) -> mammos_entity.Entity:
