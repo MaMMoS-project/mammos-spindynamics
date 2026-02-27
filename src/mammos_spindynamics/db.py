@@ -429,7 +429,7 @@ def _load_ab_initio_data(print_info: bool = False, **kwargs) -> pandas.DataFrame
     if print_info:
         print("Found material in database.")
         print(_describe_material(material))
-    return pd.read_csv(DATA_DIR / material.label / "M.csv")
+    return pd.read_csv(DATA_DIR / material.chemical_formula / "M.csv")
 
 
 def find_materials(**kwargs) -> pandas.DataFrame:
@@ -460,7 +460,6 @@ def find_materials(**kwargs) -> pandas.DataFrame:
             "cell_volume": u.Quantity,
             "ICSD_label": str,
             "OQMD_label": str,
-            "label": str,
         },
         comment="#",
     )
@@ -474,29 +473,28 @@ def find_materials(**kwargs) -> pandas.DataFrame:
 
 
 def _describe_material(
-    material: pandas.DataFrame | None = None, material_label: str | None = None
+    material: pandas.DataFrame | None = None, chemical_formula: str | None = None
 ) -> str:
     """Describe material in a complete way.
 
-    This function returns a string listing the properties of the given material
-    or the given material label.
+    This function returns a string listing the properties of the given material.
 
     Args:
         material: Material dataframe containing structure information.
-        material_label: Label of material in local database.
+        chemical_formula: Chemical formula of the requested material.
 
     Returns:
         Description of the material.
 
     Raises:
-        ValueError: If material and material label are both None.
+        ValueError: If material and chemical_formula are both None.
 
     """
-    if material is None and material_label is None:
+    if material is None and chemical_formula is None:
         raise ValueError("Material and material label cannot be both empty.")
-    if material_label is not None:
+    if chemical_formula is not None:
         df = find_materials()
-        material = df[df["label"] == material_label].iloc[0]
+        material = df[df["chemical_formula"] == chemical_formula].iloc[0]
     return dedent(
         f"""
             Chemical Formula: {material.chemical_formula}
