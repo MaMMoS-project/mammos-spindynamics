@@ -1,10 +1,26 @@
-"""UppASD Data class."""
+"""UppASD Data module.
+
+This module finds, parse and operates on data generated from the UppASD software.
+
+The :py:func:`~mammos_spindynamics.uppasd.read` function can be used to parse any of
+three possible directories:
+
+- :py:class:`~mammos_spindynamics.uppasd.MammosUppasdData` is the base directory where
+  all sweeps and runs are found.
+- :py:class:`~mammos_spindynamics.uppasd.TemperatureSweepData` is the output directory
+  of a temperature sweep.
+- :py:class:`~mammos_spindynamics.uppasd.RunData` is the output directory of a single
+  run.
+
+The :py:func:`~mammos_spindynamics.uppasd.read` function loads data lazily, only parsing
+the type of the output directory initially.
+"""
 
 from __future__ import annotations
 
-import pathlib
 import re
 from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import mammos_entity as me
@@ -14,14 +30,30 @@ import pandas as pd
 import yaml
 
 if TYPE_CHECKING:
+    import pathlib
+
     import mammos_entity
     import numpy
     import pandas
 
 
-def read(out: pathlib.Path | str) -> MammosUppasdData | RunData | TemperatureSweepData:
-    """Read UppASD calculations results directory."""
-    out = pathlib.Path(out)
+def read(
+    out: pathlib.Path | str,
+) -> MammosUppasdData | RunData | TemperatureSweepData:
+    """Read UppASD calculations results directory.
+
+    This function returns different classes based on the content of the
+    `mammos_spindynamics.yaml` generated from the execution of UppASD via the
+    `mammos_spindynamics` Python library.
+
+    Args:
+        out: Output directory to read.
+
+    Returns:
+        Relevant Data object based on the content of the given directory.
+
+    """
+    out = Path(out)
     if not out.is_dir():
         raise RuntimeError(f"Output directory {out} does not exist.")
 
@@ -44,11 +76,29 @@ def read(out: pathlib.Path | str) -> MammosUppasdData | RunData | TemperatureSwe
 
 
 class MammosUppasdData:
-    """Collection of UppASD Result instances."""
+    """Collection of UppASD Result instances.
+
+    This class collects all temperature sweeps and runs executed in the output directory
+    specified by the `path` attribute.
+
+    Attributes:
+        out (pathlib.Path): Output directory containing temperature sweeps and
+            runs.
+
+    """
 
     def __init__(self, out: pathlib.Path | str):
-        """Initialize MammosUppasdData given the directory containing all runs."""
-        self.out = pathlib.Path(out)
+        """Initialize MammosUppasdData given the directory containing all runs.
+
+        Args:
+            out: Output directory containing temperature sweeps and runs.
+
+        Examples:
+            >>> from mammos_spindynamics.uppasd import MammosUppasdData
+            >>> MammosUppasdData("Fe3Y")
+            MammosUppasdData('Fe3Y')
+        """
+        self.out = Path(out)
 
     def __repr__(self):
         """Define repr."""
@@ -64,8 +114,24 @@ class MammosUppasdData:
         runs.sort(key=lambda x: int(x.name.split("-")[0]))
         return read(runs[idx])
 
-    def get(self, **kwargs):
-        """Extract run based on different filters."""
+    def get(self, **kwargs) -> RunData | TemperatureSweepData:
+        """Select run based on different filters specified as keyword arguments.
+
+        Exceptions are raised if the filters give no match or too many matches.
+
+        Args:
+            **kwargs: Keyword arguments.
+
+        Returns:
+            :py:class:`~mammos_spindynamics.uppasd.RunData` or
+            :py:class:`~mammos_spindynamics.uppasd.TemperatureSweepData` satisfying
+            given filters.
+
+        Raises:
+            LookupError: No run has been found satisfying all filters.
+            LookupError: Too many results have been found.
+
+        """
         df = self.info()
         for key, value in kwargs.items():
             df = df[df[key] == value]
@@ -89,7 +155,19 @@ class MammosUppasdData:
         include_time_elapsed: bool = True,
         include_parameters: bool = True,
     ) -> pandas.DataFrame:
-        """Dataframe containing information about all available UppASD runs."""
+        """Return a Dataframe containing information about all available UppASD runs.
+
+        Args:
+            include_description: Whether to include the description in the dataframe
+                columns.
+            include_time_elapsed: Whether to include elapsed time in the dataframe
+                columns.
+            include_parameters: Whether to include the run parameters in the dataframe
+                columns.
+
+        Returns:
+            Dataframe with relevant information.
+        """
         metadata_keys = []
         if include_description:
             metadata_keys += ["description"]
@@ -111,11 +189,21 @@ class MammosUppasdData:
 
 
 class RunData:
-    """UppASD Data parser class for a single run."""
+    """UppASD Data parser class for a single run.
+
+    Attributes:
+        out (pathlib.Path): Output directory containing the run output.
+        metadata (dict): Dictionary of the run metadata.
+        parameters (dict): Dictionary of the run parameters.
+    """
 
     def __init__(self, out: pathlib.Path):
-        """Initialize Data given the output directory of a single run."""
-        self.out = pathlib.Path(out)
+        """Initialize RunData given the directory path of a single run.
+
+        Args:
+            out: Output directory containing the run output.
+        """
+        self.out = Path(out)
         with open(self.out / "mammos_spindynamics.yaml") as f:
             info = yaml.safe_load(f)
         self._input_dictionary = _parse_inpsd_file(self.inpsd)
@@ -134,7 +222,19 @@ class RunData:
         include_time_elapsed: bool = True,
         include_parameters: bool = True,
     ) -> pandas.DataFrame:
-        """Return information about the UppASD run."""
+        """Return a Dataframe containing information about the UppASD run.
+
+        Args:
+            include_description: Whether to include the description in the dataframe
+                columns.
+            include_time_elapsed: Whether to include elapsed time in the dataframe
+                columns.
+            include_parameters: Whether to include the run parameters in the dataframe
+                columns.
+
+        Returns:
+            Dataframe with relevant information.
+        """
         out = {"name": [self.out.name]}
         if include_description:
             out["description"] = [self.metadata["description"]]
@@ -146,33 +246,61 @@ class RunData:
         return pd.DataFrame(out)
 
     @property
-    def T(self) -> float:
-        """Get Thermodynamics Temperature."""
+    def T(self) -> mammos_entity.Entity:
+        """Get temperature of the run.
+
+        Returns:
+            Entity Thermodynamic Temperature in Kelvin.
+        """
         return me.T(self._input_dictionary["temp"])
 
     @property
     def inpsd(self) -> pathlib.Path:
-        """Get path of ``inpsd.dat`` input file."""
-        return pathlib.Path(self.out / "inpsd.dat")
+        """Get path of ``inpsd.dat`` input file.
+
+        Returns:
+            Path of input file defining simulation parameters.
+        """
+        return Path(self.out / "inpsd.dat")
 
     @property
     def exchange(self) -> pathlib.Path:
-        """Get path of file containing exchange interactions."""
+        """Get path of file containing exchange interactions.
+
+        Returns:
+            Path of file defining exchange interactions.
+        """
         return self.out / self._input_dictionary["exchange"]
 
     @property
     def momfile(self) -> pathlib.Path:
-        """Get path of file containing magnetic moments."""
+        """Get path of file containing magnetic moments.
+
+        Returns:
+            Path of file defining magnetic moments.
+        """
         return self.out / self._input_dictionary["momfile"]
 
     @property
     def posfile(self) -> pathlib.Path:
-        """Get path of file containing atomic positions."""
+        """Get path of file containing atomic positions.
+
+        Returns:
+            Path of file defining atomic positions.
+        """
         return self.out / self._input_dictionary["posfile"]
 
     @property
     def cumulants(self) -> pathlib.Path:
-        """Get ``cumulants.*.out`` file."""
+        """Get ``cumulants.*.out`` file.
+
+        Returns:
+            Path of file containing magnetic information.
+
+        Raises:
+            RuntimeError: Could not find the cumulants file.
+            RuntimeError: More than one cumulants file were found.
+        """
         cumulants = list(self.out.glob("cumulants.*.out"))
         if not cumulants:
             raise RuntimeError(f"Could not find a cumulants.<simid>.out in {self.out}")
@@ -186,7 +314,15 @@ class RunData:
 
     @property
     def restartfile(self) -> pathlib.Path:
-        """Get path of restart file."""
+        """Get path of restart file.
+
+        Returns:
+            Path of restart file for consecutive runs.
+
+        Raises:
+            RuntimeError: Could not find the restart file.
+            RuntimeError: More than one restart file were found.
+        """
         restart_files = list(self.out.glob("restart.*.out"))
         if not restart_files:
             raise RuntimeError(f"Could not find restart.<simid>.out in {self.out}")
@@ -200,14 +336,22 @@ class RunData:
 
     @property
     def n_magnetic_atoms(self) -> int:
-        """Get number of magnetic atoms."""
+        """Get number of magnetic atoms.
+
+        Returns:
+            Number of magnetic atoms as defined in the ``momfile``.
+        """
         with open(self.momfile, encoding="utf-8") as file:
             n = len(file.readlines())
         return n
 
     @property
     def Ms(self) -> mammos_entity.Entity:
-        """Get Spontaneous Magnetization."""
+        """Get spontaneous magnetization of the run.
+
+        Returns:
+            Entity Spontaneous Magnetization in Ampere per meter.
+        """
         cell = self._input_dictionary["cell"]
         lattice_const = self._input_dictionary["alat"] * u.m
         cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
@@ -217,30 +361,56 @@ class RunData:
 
     @property
     def Cv(self) -> mammos_entity.Entity:
-        """Get specific heat capacity."""
+        """Get specific heat capacity at constant volume.
+
+        Returns:
+            Entity IsochoricHeatCapacity in Joule per Kelvin.
+        """
         k_B = u.constants.k_B
         Cv = float(self._cumulant_data["C_v(tot)"]) * k_B * self.n_magnetic_atoms
         return me.Entity("IsochoricHeatCapacity", Cv)
 
     @property
     def E(self) -> mammos_entity.Entity:
-        """Get energy."""
+        """Get energy.
+
+        Returns:
+            Entity Energy in Joule.
+        """
         E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
         return me.Entity("Energy", E, unit="J")
 
     @property
     def U_binder(self) -> float:
-        """Get U_binder value."""
+        """Get U_binder coefficient.
+
+        Returns:
+            Binder coefficient.
+        """
         U_b = float(self._cumulant_data["U_{Binder}"])
         return U_b
 
 
 class TemperatureSweepData:
-    """Class for the result of the temperature_array runner."""
+    """UppASD Data parser for a temperature sweep.
+
+    A temperature sweep is a sequence of runs with changing temperature and possibly
+    other simulation parameters.
+
+    Attributes:
+        out (pathlib.Path): Output directory containing the sweep output.
+        metadata (dict): Dictionary of the sweep metadata.
+        parameters (dict): Dictionary of the sweep parameters.
+
+    """
 
     def __init__(self, out: pathlib.Path | str):
-        """Initialize TemperatureSweepData given the output directory of a sweep run."""
-        self.out = pathlib.Path(out)
+        """Initialize TemperatureSweepData given the directory path of a sweep run.
+
+        Args:
+            out: Output directory containing the sweep output.
+        """
+        self.out = Path(out)
         with open(self.out / "mammos_spindynamics.yaml") as f:
             info = yaml.safe_load(f)
         self.metadata = info["metadata"]
@@ -266,7 +436,19 @@ class TemperatureSweepData:
         include_time_elapsed: bool = True,
         include_parameters: bool = True,
     ) -> pandas.DataFrame:
-        """Dataframe containing information about all available UppASD runs."""
+        """Return a Dataframe containing information about the temperature sweep.
+
+        Args:
+            include_description: Whether to include the description in the dataframe
+                columns.
+            include_time_elapsed: Whether to include elapsed time in the dataframe
+                columns.
+            include_parameters: Whether to include the run parameters in the dataframe
+                columns.
+
+        Returns:
+            Dataframe with relevant information.
+        """
         metadata_keys = []
         if include_description:
             metadata_keys += ["description"]
@@ -293,9 +475,21 @@ class TemperatureSweepData:
         return pd.DataFrame(all_runs, index=index)
 
     def get(self, **kwargs) -> RunData:
-        """Select run satisfying certain filters defined in the keyword arguments.
+        """Select run based on different filters specified as keyword arguments.
 
-        If there are multiple matches, it returns the first one.
+        Exceptions are raised if the filters give no match or too many matches.
+
+        Args:
+            **kwargs: Keyword arguments.
+
+        Returns:
+            :py:class:`~mammos_spindynamics.uppasd.RunData` satisfying
+            given filters.
+
+        Raises:
+            LookupError: No run has been found satisfying all filters.
+            LookupError: Too many results have been found.
+
         """
         df = self.info()
         for key, val in kwargs.items():
@@ -316,20 +510,31 @@ class TemperatureSweepData:
 
     @property
     def T(self) -> mammos_entity.Entity:
-        """Get Thermodynamics Temperature."""
+        """Get array of temperatures of the sweep.
+
+        Returns:
+            1D array Entity ThermodynamicTemperature in Kelvin.
+        """
         return me.concat_flat(*[run.T for run in self if run])
 
     @property
     def Ms(self) -> mammos_entity.Entity:
-        """Get Spontaneous Magnetization."""
+        """Get array of spontaneous magnetization of the sweep.
+
+        Returns:
+            1D array Entity SpontaneousMagnetization in Kelvin.
+        """
         return me.concat_flat(*[run.Ms for run in self if run])
 
     @property
     def Cv(self) -> mammos_entity.Entity:
-        """Get Isochoric Heat Capacity.
+        """Get specific heat capacity at constant volume.
 
-        The isochorich (at constant volume) heat capacity Cv is evaluated as the
+        For a temperature sweep the heat capacity Cv is evaluated as the
         derivative of the energy as a function of temperature.
+
+        Returns:
+            1D array Entity IsochoricHeatCapacity in Joule per Kelvin.
         """
         k_B = u.constants.k_B.value
         Cv = np.gradient(self.E.value / k_B, self.T.value, axis=0)
@@ -337,12 +542,20 @@ class TemperatureSweepData:
 
     @property
     def U_binder(self) -> numpy.ndarray:
-        """Get Binder coefficient."""
+        """Get array of Binder coefficients.
+
+        Returns:
+            Array of Binder coefficients.
+        """
         return np.array([run.U_binder for run in self if run])
 
     @property
     def E(self) -> mammos_entity.Entity:
-        """Get Energy."""
+        """Get energy.
+
+        Returns:
+            1D array Entity Energy in Joule.
+        """
         return me.concat_flat(*[run.E for run in self if run])
 
     def save_output(self, out: pathlib.Path | str) -> None:
@@ -351,8 +564,11 @@ class TemperatureSweepData:
         `M(T)` contains all information evaluated from the cumulant files.
         `output.csv` contains entities for information temperature,
         magnetization, Binder cumulant and heat capacity.
+
+        Args:
+            out: Directory location where to save output files.
         """
-        out = pathlib.Path(out)
+        out = Path(out)
         out.mkdir(parents=True, exist_ok=True)
 
         with open(self[0].cumulants) as f:
