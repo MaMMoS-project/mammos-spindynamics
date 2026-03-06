@@ -6,6 +6,22 @@ This project uses [towncrier](https://towncrier.readthedocs.io/) and the changes
 
 <!-- towncrier release notes start -->
 
+## [mammos-spindynamics 0.4.0](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.4.0) – 2026-03-06
+
+### Changed
+
+- Changed unit for spontaneous magnetization entities from `A/m` to `kA/m`. ([#68](https://github.com/MaMMoS-project/mammos-spindynamics/pull/68))
+
+### Removed
+
+- Material Nd2Fe14B has been removed from the database. ([#14](https://github.com/MaMMoS-project/mammos-spindynamics/pull/14))
+
+### Misc
+
+- Improved documentation for uppasd module. ([#58](https://github.com/MaMMoS-project/mammos-spindynamics/pull/58))
+- The directory structure of the internal database is now defined by the chemical material rather than by an integer index. ([#59](https://github.com/MaMMoS-project/mammos-spindynamics/pull/59))
+
+
 ## [mammos-spindynamics 0.3.1](https://github.com/MaMMoS-project/mammos-spindynamics/tree/0.3.1) – 2025-12-18
 
 ### Fixed

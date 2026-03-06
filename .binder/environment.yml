@@ -6,4 +6,4 @@ dependencies:
   - pip
   - pip:
       - mammos-dft
-      - mammos-spindynamics==0.3.1
+      - mammos-spindynamics==0.4.0
