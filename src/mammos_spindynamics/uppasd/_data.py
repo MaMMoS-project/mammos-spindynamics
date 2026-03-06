@@ -191,9 +191,9 @@ class RunData:
     """UppASD Data parser class for a single run.
 
     Attributes:
-        out (pathlib.Path): Output directory containing the run output.
-        metadata (dict): Dictionary of the run metadata.
-        parameters (dict): Dictionary of the run parameters.
+        out: Output directory containing the run output.
+        metadata: Dictionary of the run metadata.
+        parameters: Dictionary of the run parameters.
     """
 
     def __init__(self, out: pathlib.Path):
