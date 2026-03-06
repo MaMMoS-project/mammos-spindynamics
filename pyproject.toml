@@ -72,7 +72,6 @@ python = "==3.11"
 hatch = "*"
 ipython = "*"
 jupyterlab = ">3"
-mammos-dft = ">=0.4.0"
 nbval = "*"
 packaging = "<25"
 pre-commit = "*"
@@ -84,6 +83,7 @@ uppasd = "*"
 
 [tool.pixi.pypi-dependencies]
 mammos-analysis = "*"
+mammos-dft = ">=0.4.0"
 mammos-spindynamics = { path = ".", editable = true }
 
 [tool.pixi.tasks]
