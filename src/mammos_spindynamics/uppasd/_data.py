@@ -397,9 +397,9 @@ class TemperatureSweepData:
     other simulation parameters.
 
     Attributes:
-        out (pathlib.Path): Output directory containing the sweep output.
-        metadata (dict): Dictionary of the sweep metadata.
-        parameters (dict): Dictionary of the sweep parameters.
+        out: Output directory containing the sweep output.
+        metadata: Dictionary of the sweep metadata.
+        parameters: Dictionary of the sweep parameters.
 
     """
 
