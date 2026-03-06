@@ -479,7 +479,7 @@ class TemperatureSweepData:
         Exceptions are raised if the filters give no match or too many matches.
 
         Args:
-            **kwargs: Keyword arguments.
+            **kwargs: Keys are the names to filter on, values must match exactly.
 
         Returns:
             :py:class:`~mammos_spindynamics.uppasd.RunData` satisfying
