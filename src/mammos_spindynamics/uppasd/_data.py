@@ -514,7 +514,7 @@ class TemperatureSweepData:
         Returns:
             1D array Entity ThermodynamicTemperature in Kelvin.
         """
-        return me.concat_flat(*[run.T for run in self if run])
+        return me.operations.concat_flat(*[run.T for run in self if run])
 
     @property
     def Ms(self) -> mammos_entity.Entity:
@@ -523,7 +523,7 @@ class TemperatureSweepData:
         Returns:
             1D array Entity SpontaneousMagnetization in Kelvin.
         """
-        return me.concat_flat(*[run.Ms for run in self if run])
+        return me.operations.concat_flat(*[run.Ms for run in self if run])
 
     @property
     def Cv(self) -> mammos_entity.Entity:
@@ -555,7 +555,7 @@ class TemperatureSweepData:
         Returns:
             1D array Entity Energy in Joule.
         """
-        return me.concat_flat(*[run.E for run in self if run])
+        return me.operations.concat_flat(*[run.E for run in self if run])
 
     def save_output(self, out: pathlib.Path | str) -> None:
         """Save output files M(T) and output.csv in directory `out`.
@@ -582,15 +582,14 @@ class TemperatureSweepData:
                         lines = f_run.readlines()
                     f.write(f"{run.T.value:>5.0f} {lines[-1]}")
 
-        me.io.entities_to_file(
-            out / "output.csv",
-            "Magnetization and heat capacity from UppASD",
+        me.EntityCollection(
+            description="Magnetization and heat capacity from UppASD",
             T=self.T,
             Ms=self.Ms,
             U_binder=self.U_binder,
             Cv=self.Cv,
             E=self.E,
-        )
+        ).to_csv(out / "output.csv")
 
 
 def _parse_inpsd_file(inpsd_file: pathlib.Path | str) -> dict:

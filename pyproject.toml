@@ -25,7 +25,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-  "mammos-entity>=0.8.0",
+  "mammos-entity>=0.12.0",
   "mammos-units",
   "matplotlib>=3.10.1",
   "numpy",
@@ -72,7 +72,6 @@ python = "==3.11"
 hatch = "*"
 ipython = "*"
 jupyterlab = ">3"
-mammos-dft = ">=0.4.0"
 nbval = "*"
 packaging = "<25"
 pre-commit = "*"
@@ -84,6 +83,7 @@ uppasd = "*"
 
 [tool.pixi.pypi-dependencies]
 mammos-analysis = "*"
+mammos-dft = ">=0.4.0"
 mammos-spindynamics = { path = ".", editable = true }
 
 [tool.pixi.tasks]
