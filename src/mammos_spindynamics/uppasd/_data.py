@@ -82,8 +82,7 @@ class MammosUppasdData:
     specified by the `path` attribute.
 
     Attributes:
-        out (pathlib.Path): Output directory containing temperature sweeps and
-            runs.
+        out: Output directory containing temperature sweeps and runs.
 
     """
 
