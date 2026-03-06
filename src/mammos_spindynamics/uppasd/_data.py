@@ -1,6 +1,6 @@
 """UppASD Data module.
 
-This module finds, parse and operates on data generated from the UppASD software.
+This module finds, parses and operates on data generated from the UppASD software.
 
 The :py:func:`~mammos_spindynamics.uppasd.read` function can be used to parse any of
 three possible directories:
