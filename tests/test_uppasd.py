@@ -154,7 +154,7 @@ def test_TemperatureSweepData_class(DATA):
 def test_TemperatureSweepData_output(DATA, tmp_path):
     sweep_data = uppasd.read(DATA / "uppasd" / "0-temperature_sweep")
     sweep_data.save_output(tmp_path)
-    collection = me.io.entities_from_file(tmp_path / "output.csv")
+    collection = me.from_csv(tmp_path / "output.csv")
     T = me.T([2, 5])
     Ms = me.Ms([6781.89022085, 6810.43736377])
     Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
