@@ -11,11 +11,10 @@ import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 from rich import print
 
 if TYPE_CHECKING:
+    import mammos_entity
     import matplotlib
     import pandas
 
@@ -129,17 +128,30 @@ def get_spontaneous_magnetization(
     )
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class MagnetizationData:
+@me._entity_collection.frozen_collection
+class MagnetizationData(me.EntityCollection):
     """Magnetization data.
 
     Contains temperature and spontaneous magnetization data.
     """
 
-    T: me.Entity
-    """Array of temperatures."""
-    Ms: me.Entity
-    """Array of spontaneous magnetizations for the different temperatures."""
+    def __init__(
+        self,
+        T: mammos_entity.Entity,
+        Ms: mammos_entity.Entity,
+        description: str = "",
+    ) -> None:
+        """Initialize MagnetizationData.
+
+        Args:
+            T: Array of temperatures as :entity:`ThermodynamicTemperature`.
+            Ms: Array of spontaneous magnetizations for the different temperatures as
+                :entity:`SpontaneousMagnetization`.
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("ThermodynamicTemperature", T=T)
+        me._entity.ensure_entity("SpontaneousMagnetization", Ms=Ms)
+        super().__init__(description=description, T=T, Ms=Ms)
 
     @property
     def dataframe(self):
