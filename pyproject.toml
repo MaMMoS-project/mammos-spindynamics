@@ -30,7 +30,6 @@ dependencies = [
   "matplotlib>=3.10.1",
   "numpy",
   "pandas",
-  "pydantic",
   "rich",
 ]
 
