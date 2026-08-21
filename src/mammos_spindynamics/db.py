@@ -98,7 +98,11 @@ def get_spontaneous_magnetization(
     Examples:
         >>> import mammos_spindynamics.db
         >>> mammos_spindynamics.db.get_spontaneous_magnetization("Fe16N2")
-        MagnetizationData(T=..., Ms=...)
+        MagnetizationData(
+            description='',
+            T=...,
+            Ms=...,
+        )
 
     """
     if posfile is not None:
