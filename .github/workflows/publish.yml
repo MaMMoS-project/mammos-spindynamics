@@ -18,9 +18,9 @@ jobs:
     needs: test-and-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.8.8
+        uses: prefix-dev/setup-pixi@v0.10.1
       - name: Read version from pyproject.toml
         run: echo VERSION=$(pixi run hatch version) >> "$GITHUB_ENV"
       - run: echo $GITHUB_REF_NAME
@@ -35,7 +35,7 @@ jobs:
     needs: check_version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check that changes/ is empty
         shell: bash
         run: |
@@ -85,7 +85,7 @@ jobs:
       id-token: write
     steps:
     - name: Download dists
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: dist
         path: dist/
@@ -102,12 +102,12 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for sigstore
     steps:
     - name: Download dists
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: dist
         path: dist/
     - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.0.0
+      uses: sigstore/gh-action-sigstore-python@v3.4.0
       with:
         inputs: >-
           ./dist/*.tar.gz
@@ -139,6 +139,6 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Run latest-tag
         uses: EndBug/latest-tag@latest
