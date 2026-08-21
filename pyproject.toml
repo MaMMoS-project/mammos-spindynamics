@@ -25,12 +25,11 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-  "mammos-entity>=0.12.0",
+  "mammos-entity>=0.14.0",
   "mammos-units",
   "matplotlib>=3.10.1",
   "numpy",
   "pandas",
-  "pydantic",
   "rich",
 ]
 
