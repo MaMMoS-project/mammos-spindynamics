@@ -583,7 +583,7 @@ class TemperatureSweepData:
                     f.write(f"{run.T.value:0>4.0f} {lines[-1]}")
 
         me.EntityCollection(
-            description="Magnetization and heat capacity from UppASD",
+            description="Temperature-dependent quantities computed with UppASD",
             T=self.T,
             Ms=self.Ms,
             U_binder=self.U_binder,
