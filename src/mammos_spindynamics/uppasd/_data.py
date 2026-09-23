@@ -251,7 +251,7 @@ class RunData:
         Returns:
             Entity Thermodynamic Temperature in Kelvin.
         """
-        return me.T(self._input_dictionary["temp"])
+        return me.Entity("ThermodynamicTemperature", self._input_dictionary["temp"])
 
     @property
     def inpsd(self) -> pathlib.Path:
@@ -356,7 +356,7 @@ class RunData:
         cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
         Ms_mu_B_per_atom = float(self._cumulant_data["<M>"]) * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / cell_volume
-        return me.Ms(Ms, unit="kA/m")
+        return me.Entity("SpontaneousMagnetization", Ms, unit="kA/m")
 
     @property
     def Cv(self) -> mammos_entity.Entity:
