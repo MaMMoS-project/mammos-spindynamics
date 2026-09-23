@@ -125,7 +125,11 @@ def get_spontaneous_magnetization(
 
     return MagnetizationData(
         me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
-        me.Ms((table["M[A/m]"].to_numpy() * u.A / u.m), unit="kA/m"),
+        me.Entity(
+            "SpontaneousMagnetization",
+            (table["M[A/m]"].to_numpy() * u.A / u.m),
+            unit="kA/m",
+        ),
     )
 
 
