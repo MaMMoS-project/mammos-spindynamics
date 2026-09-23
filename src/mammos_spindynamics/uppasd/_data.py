@@ -574,8 +574,8 @@ class TemperatureSweepData:
             lines = f.readlines()
         header = lines[0]
 
-        with open(out / "M(T)", "w") as f:
             f.write(f"{'T':>5} {header}")
+        with open(out / "thermal.dat", "w") as f:
             for run in self:
                 if run:
                     with open(run.cumulants) as f_run:
@@ -589,7 +589,7 @@ class TemperatureSweepData:
             U_binder=self.U_binder,
             Cv=self.Cv,
             E=self.E,
-        ).to_csv(out / "output.csv")
+        ).to_csv(out / "thermal.csv")
 
 
 def _parse_inpsd_file(inpsd_file: pathlib.Path | str) -> dict:
