@@ -137,9 +137,9 @@ class MagnetizationData:
     """
 
     T: me.Entity
-    """Array of temperatures."""
+    """Array :entity:`ThermodynamicTemperature`."""
     Ms: me.Entity
-    """Array of spontaneous magnetizations for the different temperatures."""
+    """Array :entity:`SpontaneousMagnetization` for the different temperatures."""
 
     @property
     def dataframe(self):
