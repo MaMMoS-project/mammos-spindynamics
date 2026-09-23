@@ -387,7 +387,7 @@ class RunData:
             Binder coefficient.
         """
         U_b = float(self._cumulant_data["U_{Binder}"])
-        return U_b
+        return me.Entity("BinderCumulant", U_b)
 
 
 class TemperatureSweepData:
@@ -544,9 +544,9 @@ class TemperatureSweepData:
         """Get array of Binder coefficients.
 
         Returns:
-            Array of Binder coefficients.
+            1D array Entity BinderCumulant.
         """
-        return np.array([run.U_binder for run in self if run])
+        return me.operations.concat_flat(*[run.U_Binder for run in self if run])
 
     @property
     def E(self) -> mammos_entity.Entity:
