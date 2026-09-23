@@ -11,11 +11,10 @@ import mammos_units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 from rich import print
 
 if TYPE_CHECKING:
+    import mammos_entity
     import matplotlib
     import pandas
 
@@ -99,7 +98,11 @@ def get_spontaneous_magnetization(
     Examples:
         >>> import mammos_spindynamics.db
         >>> mammos_spindynamics.db.get_spontaneous_magnetization("Fe16N2")
-        MagnetizationData(T=..., Ms=...)
+        MagnetizationData(
+            description='',
+            T=...,
+            Ms=...,
+        )
 
     """
     if posfile is not None:
@@ -124,32 +127,31 @@ def get_spontaneous_magnetization(
         )
 
     return MagnetizationData(
-        me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
-        me.Ms((table["M[A/m]"].to_numpy() * u.A / u.m), unit="kA/m"),
+        T=me.Entity("ThermodynamicTemperature", value=table["T[K]"], unit=u.K),
+        Ms=me.Ms((table["M[A/m]"].to_numpy() * u.A / u.m), unit="kA/m"),
     )
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True, frozen=True))
-class MagnetizationData:
+class MagnetizationData(me.EntityCollection):
     """Magnetization data.
 
     Contains temperature and spontaneous magnetization data.
     """
 
-    T: me.Entity
-    """Array of temperatures."""
-    Ms: me.Entity
-    """Array of spontaneous magnetizations for the different temperatures."""
+    def __init__(
+        self, T: mammos_entity.Entity, Ms: mammos_entity.Entity, description: str = ""
+    ):
+        """Create a new `MagneitzationData` collection.
 
-    @property
-    def dataframe(self):
-        """Dataframe containing temperature and spontaneous magnetization data."""
-        return pd.DataFrame(
-            {
-                "T": self.T.value,
-                "Ms": self.Ms.value,
-            }
-        )
+        Args:
+            T: :entity:`ThermodynamicTemperature` containing an array of temperatures.
+            Ms: :entity:`SpontaneousMagnetization` containing magnetization
+                values at different temperatures.
+            description: Description of the collection.
+        """
+        me._entity.ensure_entity("ThermodynamicTemperature", T=T)
+        me._entity.ensure_entity("SpontaneousMagnetization", Ms=Ms)
+        super().__init__(description=description, T=T, Ms=Ms)
 
     def plot(
         self, ax: matplotlib.axes.Axes | None = None, **kwargs
