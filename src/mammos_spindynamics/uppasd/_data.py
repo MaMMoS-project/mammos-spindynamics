@@ -389,6 +389,16 @@ class RunData:
         U_b = float(self._cumulant_data["U_{Binder}"])
         return U_b
 
+    @property
+    def chi(self) -> mammos_entity.Entity:
+        """Get magnetic susceptibility.
+
+        Returns:
+            :entity:`MagneticSusceptibility`.
+        """
+        chi = float(self._cumulant_data["\chi"])
+        return me.Entity("MagneticSusceptibility", chi)
+
 
 class TemperatureSweepData:
     """UppASD Data parser for a temperature sweep.
@@ -557,6 +567,15 @@ class TemperatureSweepData:
         """
         return me.operations.concat_flat(*[run.E for run in self if run])
 
+    @property
+    def chi(self) -> numpy.ndarray:
+        """Get magnetic susceptibility of the sweep.
+
+        Returns:
+            1D array :entity:`MagneticSusceptibility`.
+        """
+        return me.operations.concat_flat(*[run.chi for run in self if run])
+
     def save_output(self, out: pathlib.Path | str) -> None:
         """Save output files M(T) and output.csv in directory `out`.
 
@@ -594,6 +613,7 @@ class TemperatureSweepData:
             Js=Js,
             E=self.E,
             Cv=self.Cv,
+            chi=self.chi,
         ).to_csv(out / "thermal.csv")
 
 
