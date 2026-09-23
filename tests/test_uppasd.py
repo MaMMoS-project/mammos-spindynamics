@@ -173,7 +173,7 @@ def test_TemperatureSweepData_output(DATA, tmp_path):
     assert collection.Ms == Ms
     assert collection.Js == Js
     assert collection.Cv == Cv
-    assert np.allclose(collection.U_binder, U_binder)
+    assert np.allclose(collection.U_L, U_binder)
     assert collection.E == E
     assert collection.chi == chi
 

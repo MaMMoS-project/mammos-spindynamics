@@ -609,11 +609,11 @@ class TemperatureSweepData:
             description="Temperature-dependent quantities computed with UppASD",
             T=self.T,
             Ms=self.Ms,
-            U_binder=self.U_binder,
             Js=Js,
             E=self.E,
             Cv=self.Cv,
             chi=self.chi,
+            U_L=self.U_binder,
         ).to_csv(out / "thermal.csv")
 
 
