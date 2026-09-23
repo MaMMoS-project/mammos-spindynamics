@@ -574,13 +574,13 @@ class TemperatureSweepData:
             lines = f.readlines()
         header = lines[0]
 
-            f.write(f"{'T':>5} {header}")
         with open(out / "thermal.dat", "w") as f:
+            f.write(f"{'T':<4} {header}")
             for run in self:
                 if run:
                     with open(run.cumulants) as f_run:
                         lines = f_run.readlines()
-                    f.write(f"{run.T.value:>5.0f} {lines[-1]}")
+                    f.write(f"{run.T.value:0>4.0f} {lines[-1]}")
 
         me.EntityCollection(
             description="Magnetization and heat capacity from UppASD",
