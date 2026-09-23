@@ -208,7 +208,11 @@ class RunData:
         self._input_dictionary = _parse_inpsd_file(self.inpsd)
         self.metadata = info["metadata"]
         self.parameters = info["parameters"]
-        df = pd.read_csv(self.cumulants, sep=r"\s+")
+        df = pd.read_csv(
+            self.cumulants,
+            sep=r"\s+",
+            names=["iter", "M", "M2", "M4", "U_L", "chi", "C_v", "E", "E_exc", "E_lsf"],
+        )
         self._cumulant_data = df.iloc[-1]
 
     def __repr__(self):
@@ -354,7 +358,7 @@ class RunData:
         cell = self._input_dictionary["cell"]
         lattice_const = self._input_dictionary["alat"] * u.m
         cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
-        Ms_mu_B_per_atom = float(self._cumulant_data["<M>"]) * u.mu_B
+        Ms_mu_B_per_atom = float(self._cumulant_data["M"]) * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / cell_volume
         return me.Ms(Ms, unit="kA/m")
 
@@ -366,7 +370,7 @@ class RunData:
             Entity IsochoricHeatCapacity in electronvolt per Kelvin.
         """
         k_B = u.constants.k_B
-        Cv = float(self._cumulant_data["C_v(tot)"]) * k_B * self.n_magnetic_atoms
+        Cv = float(self._cumulant_data["C_v"]) * k_B * self.n_magnetic_atoms
         return me.Entity("IsochoricHeatCapacity", Cv, "eV / K")
 
     @property
@@ -376,7 +380,7 @@ class RunData:
         Returns:
             Entity HelmholtzEnergy in electronvolt.
         """
-        E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
+        E = float(self._cumulant_data["E"]) * u.mRy * self.n_magnetic_atoms
         return me.Entity("HelmholtzEnergy", E, unit="eV")
 
     @property
@@ -386,7 +390,7 @@ class RunData:
         Returns:
             Binder coefficient.
         """
-        U_b = float(self._cumulant_data["U_{Binder}"])
+        U_b = float(self._cumulant_data["U_L"])
         return U_b
 
     @property
@@ -396,7 +400,7 @@ class RunData:
         Returns:
             :entity:`MagneticSusceptibility`.
         """
-        chi = float(self._cumulant_data["\chi"])
+        chi = float(self._cumulant_data["chi"])
         return me.Entity("MagneticSusceptibility", chi)
 
 
