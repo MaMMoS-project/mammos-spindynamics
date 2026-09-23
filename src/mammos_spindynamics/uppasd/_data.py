@@ -371,13 +371,13 @@ class RunData:
 
     @property
     def E(self) -> mammos_entity.Entity:
-        """Get energy.
+        """Get Helmholtz energy.
 
         Returns:
-            Entity Energy in Joule.
+            Entity HelmholtzEnergy in electronvolt.
         """
         E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
-        return me.Entity("Energy", E, unit="J")
+        return me.Entity("HelmholtzEnergy", E, unit="eV")
 
     @property
     def U_binder(self) -> float:
@@ -550,10 +550,10 @@ class TemperatureSweepData:
 
     @property
     def E(self) -> mammos_entity.Entity:
-        """Get energy.
+        """Get Helmholtz energy of the sweep.
 
         Returns:
-            1D array Entity Energy in Joule.
+            1D array Entity Helmholtz Energy in electronvolt.
         """
         return me.operations.concat_flat(*[run.E for run in self if run])
 
