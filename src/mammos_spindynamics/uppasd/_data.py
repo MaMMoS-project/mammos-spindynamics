@@ -249,7 +249,7 @@ class RunData:
         """Get temperature of the run.
 
         Returns:
-            Entity Thermodynamic Temperature in Kelvin.
+            :entity:`ThermodynamicTemperature` in Kelvin.
         """
         return me.T(self._input_dictionary["temp"])
 
@@ -349,7 +349,7 @@ class RunData:
         """Get spontaneous magnetization of the run.
 
         Returns:
-            Entity Spontaneous Magnetization in Ampere per meter.
+            :entity:`SpontaneousMagnetization` in Ampere per meter.
         """
         cell = self._input_dictionary["cell"]
         lattice_const = self._input_dictionary["alat"] * u.m
@@ -363,7 +363,7 @@ class RunData:
         """Get specific heat capacity at constant volume.
 
         Returns:
-            Entity IsochoricHeatCapacity in Joule per Kelvin.
+            :entity:`IsochoricHeatCapacity` in Joule per Kelvin.
         """
         k_B = u.constants.k_B
         Cv = float(self._cumulant_data["C_v(tot)"]) * k_B * self.n_magnetic_atoms
@@ -374,7 +374,7 @@ class RunData:
         """Get energy.
 
         Returns:
-            Entity Energy in Joule.
+            :entity:`Energy` in Joule.
         """
         E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
         return me.Entity("Energy", E, unit="J")
@@ -512,7 +512,7 @@ class TemperatureSweepData:
         """Get array of temperatures of the sweep.
 
         Returns:
-            1D array Entity ThermodynamicTemperature in Kelvin.
+            1D array :entity:`ThermodynamicTemperature` in Kelvin.
         """
         return me.operations.concat_flat(*[run.T for run in self if run])
 
@@ -521,7 +521,7 @@ class TemperatureSweepData:
         """Get array of spontaneous magnetization of the sweep.
 
         Returns:
-            1D array Entity SpontaneousMagnetization in Kelvin.
+            1D array :entity:`SpontaneousMagnetization` in Kelvin.
         """
         return me.operations.concat_flat(*[run.Ms for run in self if run])
 
@@ -533,7 +533,7 @@ class TemperatureSweepData:
         derivative of the energy as a function of temperature.
 
         Returns:
-            1D array Entity IsochoricHeatCapacity in Joule per Kelvin.
+            1D array :entity:`IsochoricHeatCapacity` in Joule per Kelvin.
         """
         k_B = u.constants.k_B.value
         Cv = np.gradient(self.E.value / k_B, self.T.value, axis=0)
@@ -553,7 +553,7 @@ class TemperatureSweepData:
         """Get energy.
 
         Returns:
-            1D array Entity Energy in Joule.
+            1D array :entity:`Energy` in Joule.
         """
         return me.operations.concat_flat(*[run.E for run in self if run])
 
