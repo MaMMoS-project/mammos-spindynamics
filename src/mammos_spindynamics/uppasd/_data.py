@@ -363,11 +363,11 @@ class RunData:
         """Get specific heat capacity at constant volume.
 
         Returns:
-            Entity IsochoricHeatCapacity in Joule per Kelvin.
+            Entity IsochoricHeatCapacity in electronvolt per Kelvin.
         """
         k_B = u.constants.k_B
         Cv = float(self._cumulant_data["C_v(tot)"]) * k_B * self.n_magnetic_atoms
-        return me.Entity("IsochoricHeatCapacity", Cv)
+        return me.Entity("IsochoricHeatCapacity", Cv, "eV / K")
 
     @property
     def E(self) -> mammos_entity.Entity:
@@ -533,11 +533,11 @@ class TemperatureSweepData:
         derivative of the energy as a function of temperature.
 
         Returns:
-            1D array Entity IsochoricHeatCapacity in Joule per Kelvin.
+            1D array Entity IsochoricHeatCapacity in electronvolt per Kelvin.
         """
         k_B = u.constants.k_B.value
         Cv = np.gradient(self.E.value / k_B, self.T.value, axis=0)
-        return me.Entity("IsochoricHeatCapacity", Cv)
+        return me.Entity("IsochoricHeatCapacity", Cv, "eV / K")
 
     @property
     def U_binder(self) -> numpy.ndarray:
@@ -591,9 +591,9 @@ class TemperatureSweepData:
             T=self.T,
             Ms=self.Ms,
             U_binder=self.U_binder,
-            Cv=self.Cv,
             Js=Js,
             E=self.E,
+            Cv=self.Cv,
         ).to_csv(out / "thermal.csv")
 
 
