@@ -3,7 +3,6 @@
 import pathlib
 
 import mammos_entity as me
-import numpy as np
 import pandas as pd
 import yaml
 
@@ -83,7 +82,7 @@ def test_RunData_class(DATA):
     assert me.Ms(6834.473593675746) == run_data.Ms
     assert me.Entity("IsochoricHeatCapacity", 0) == run_data.Cv
     assert me.Entity("Energy", 0) == run_data.E
-    assert run_data.U_binder == 0.512274383
+    assert me.Entity("BinderCumulant", 0.512274383) == run_data.U_L
     assert run_data.inpsd == pathlib.Path(run_dir / "inpsd.dat")
     assert run_data.exchange == pathlib.Path(run_dir / "jfile")
     assert run_data.momfile == pathlib.Path(run_dir / "momfile")
@@ -143,12 +142,12 @@ def test_TemperatureSweepData_class(DATA):
     Ms = me.Ms([6781.89022085, 6810.43736377])
     Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
     E = me.Entity("Energy", [0, 0])
-    U_binder = np.array([0.50682319, 0.50969701])
+    U_L = me.Entity("BinderCumulant", [0.50682319, 0.50969701])
     assert T == sweep_data.T
     assert Ms == sweep_data.Ms
     assert Cv == sweep_data.Cv
     assert E == sweep_data.E
-    assert np.allclose(U_binder, sweep_data.U_binder)
+    assert U_L == sweep_data.U_L
 
 
 def test_TemperatureSweepData_output(DATA, tmp_path):
@@ -158,12 +157,12 @@ def test_TemperatureSweepData_output(DATA, tmp_path):
     T = me.T([2, 5])
     Ms = me.Ms([6781.89022085, 6810.43736377])
     Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
-    U_binder = np.array([0.50682319, 0.50969701])
+    U_L = me.Entity("BinderCumulant", [0.50682319, 0.50969701])
     E = me.Entity("Energy", [0, 0])
     assert collection.T == T
     assert collection.Ms == Ms
     assert collection.Cv == Cv
-    assert np.allclose(collection.U_binder, U_binder)
+    assert collection.U_L == U_L
     assert collection.E == E
 
 
