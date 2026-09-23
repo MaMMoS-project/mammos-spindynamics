@@ -582,12 +582,17 @@ class TemperatureSweepData:
                         lines = f_run.readlines()
                     f.write(f"{run.T.value:0>4.0f} {lines[-1]}")
 
+        Js = me.Entity(
+            "SpontaneousMagneticPolarization",
+            self.Ms.q.to("T", equivalencies=u.magnetic_flux_field()),
+        )
         me.EntityCollection(
             description="Temperature-dependent quantities computed with UppASD",
             T=self.T,
             Ms=self.Ms,
             U_binder=self.U_binder,
             Cv=self.Cv,
+            Js=Js,
             E=self.E,
         ).to_csv(out / "thermal.csv")
 

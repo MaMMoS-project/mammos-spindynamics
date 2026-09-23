@@ -3,6 +3,7 @@
 import pathlib
 
 import mammos_entity as me
+import mammos_units as u
 import numpy as np
 import pandas as pd
 import yaml
@@ -160,8 +161,13 @@ def test_TemperatureSweepData_output(DATA, tmp_path):
     Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
     U_binder = np.array([0.50682319, 0.50969701])
     E = me.Entity("Energy", [0, 0])
+    Js = me.Entity(
+        "SpontaneousMagneticPolarization",
+        Ms.q.to("T", equivalencies=u.magnetic_flux_field()),
+    )
     assert collection.T == T
     assert collection.Ms == Ms
+    assert collection.Js == Js
     assert collection.Cv == Cv
     assert np.allclose(collection.U_binder, U_binder)
     assert collection.E == E
