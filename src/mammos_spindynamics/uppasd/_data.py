@@ -208,7 +208,11 @@ class RunData:
         self._input_dictionary = _parse_inpsd_file(self.inpsd)
         self.metadata = info["metadata"]
         self.parameters = info["parameters"]
-        df = pd.read_csv(self.cumulants, sep=r"\s+")
+        df = pd.read_csv(
+            self.cumulants,
+            sep=r"\s+",
+            names=["iter", "M", "M2", "M4", "U_L", "chi", "C_v", "E", "E_exc", "E_lsf"],
+        )
         self._cumulant_data = df.iloc[-1]
 
     def __repr__(self):
@@ -354,7 +358,7 @@ class RunData:
         cell = self._input_dictionary["cell"]
         lattice_const = self._input_dictionary["alat"] * u.m
         cell_volume = np.dot(cell[0], np.cross(cell[1], cell[2])) * lattice_const**3
-        Ms_mu_B_per_atom = float(self._cumulant_data["<M>"]) * u.mu_B
+        Ms_mu_B_per_atom = float(self._cumulant_data["M"]) * u.mu_B
         Ms = Ms_mu_B_per_atom * self.n_magnetic_atoms / cell_volume
         return me.Ms(Ms, unit="kA/m")
 
@@ -363,21 +367,21 @@ class RunData:
         """Get specific heat capacity at constant volume.
 
         Returns:
-            Entity IsochoricHeatCapacity in Joule per Kelvin.
+            Entity IsochoricHeatCapacity in electronvolt per Kelvin.
         """
         k_B = u.constants.k_B
-        Cv = float(self._cumulant_data["C_v(tot)"]) * k_B * self.n_magnetic_atoms
-        return me.Entity("IsochoricHeatCapacity", Cv)
+        Cv = float(self._cumulant_data["C_v"]) * k_B * self.n_magnetic_atoms
+        return me.Entity("IsochoricHeatCapacity", Cv, "eV / K")
 
     @property
     def E(self) -> mammos_entity.Entity:
-        """Get energy.
+        """Get Helmholtz energy.
 
         Returns:
-            Entity Energy in Joule.
+            Entity HelmholtzEnergy in electronvolt.
         """
-        E = float(self._cumulant_data["<E>"]) * u.mRy * self.n_magnetic_atoms
-        return me.Entity("Energy", E, unit="J")
+        E = float(self._cumulant_data["E"]) * u.mRy * self.n_magnetic_atoms
+        return me.Entity("HelmholtzEnergy", E, unit="eV")
 
     @property
     def U_binder(self) -> float:
@@ -386,8 +390,18 @@ class RunData:
         Returns:
             Binder coefficient.
         """
-        U_b = float(self._cumulant_data["U_{Binder}"])
+        U_b = float(self._cumulant_data["U_L"])
         return U_b
+
+    @property
+    def chi(self) -> mammos_entity.Entity:
+        """Get magnetic susceptibility.
+
+        Returns:
+            :entity:`MagneticSusceptibility`.
+        """
+        chi = float(self._cumulant_data["chi"])
+        return me.Entity("MagneticSusceptibility", chi)
 
 
 class TemperatureSweepData:
@@ -533,11 +547,11 @@ class TemperatureSweepData:
         derivative of the energy as a function of temperature.
 
         Returns:
-            1D array Entity IsochoricHeatCapacity in Joule per Kelvin.
+            1D array Entity IsochoricHeatCapacity in electronvolt per Kelvin.
         """
         k_B = u.constants.k_B.value
         Cv = np.gradient(self.E.value / k_B, self.T.value, axis=0)
-        return me.Entity("IsochoricHeatCapacity", Cv)
+        return me.Entity("IsochoricHeatCapacity", Cv, "eV / K")
 
     @property
     def U_binder(self) -> numpy.ndarray:
@@ -550,12 +564,21 @@ class TemperatureSweepData:
 
     @property
     def E(self) -> mammos_entity.Entity:
-        """Get energy.
+        """Get Helmholtz energy of the sweep.
 
         Returns:
-            1D array Entity Energy in Joule.
+            1D array Entity Helmholtz Energy in electronvolt.
         """
         return me.operations.concat_flat(*[run.E for run in self if run])
+
+    @property
+    def chi(self) -> numpy.ndarray:
+        """Get magnetic susceptibility of the sweep.
+
+        Returns:
+            1D array :entity:`MagneticSusceptibility`.
+        """
+        return me.operations.concat_flat(*[run.chi for run in self if run])
 
     def save_output(self, out: pathlib.Path | str) -> None:
         """Save output files M(T) and output.csv in directory `out`.
@@ -574,22 +597,28 @@ class TemperatureSweepData:
             lines = f.readlines()
         header = lines[0]
 
-        with open(out / "M(T)", "w") as f:
-            f.write(f"{'T':>5} {header}")
+        with open(out / "thermal.dat", "w") as f:
+            f.write(f"{'T':<4} {header}")
             for run in self:
                 if run:
                     with open(run.cumulants) as f_run:
                         lines = f_run.readlines()
-                    f.write(f"{run.T.value:>5.0f} {lines[-1]}")
+                    f.write(f"{run.T.value:0>4.0f} {lines[-1]}")
 
+        Js = me.Entity(
+            "SpontaneousMagneticPolarization",
+            self.Ms.q.to("T", equivalencies=u.magnetic_flux_field()),
+        )
         me.EntityCollection(
-            description="Magnetization and heat capacity from UppASD",
+            description="Temperature-dependent quantities computed with UppASD",
             T=self.T,
             Ms=self.Ms,
-            U_binder=self.U_binder,
-            Cv=self.Cv,
+            Js=Js,
             E=self.E,
-        ).to_csv(out / "output.csv")
+            Cv=self.Cv,
+            chi=self.chi,
+            U_L=self.U_binder,
+        ).to_csv(out / "thermal.csv")
 
 
 def _parse_inpsd_file(inpsd_file: pathlib.Path | str) -> dict:

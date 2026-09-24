@@ -3,6 +3,7 @@
 import pathlib
 
 import mammos_entity as me
+import mammos_units as u
 import numpy as np
 import pandas as pd
 import yaml
@@ -81,9 +82,10 @@ def test_RunData_class(DATA):
     assert info_df.equals(run_data.info())
     assert me.T(10) == run_data.T
     assert me.Ms(6834.473593675746) == run_data.Ms
-    assert me.Entity("IsochoricHeatCapacity", 0) == run_data.Cv
-    assert me.Entity("Energy", 0) == run_data.E
     assert run_data.U_binder == 0.512274383
+    assert me.Entity("IsochoricHeatCapacity", 0, "eV / K") == run_data.Cv
+    assert me.Entity("HelmholtzEnergy", 0, "eV") == run_data.E
+    assert me.Entity("MagneticSusceptibility", 0.0853421989) == run_data.chi
     assert run_data.inpsd == pathlib.Path(run_dir / "inpsd.dat")
     assert run_data.exchange == pathlib.Path(run_dir / "jfile")
     assert run_data.momfile == pathlib.Path(run_dir / "momfile")
@@ -141,30 +143,39 @@ def test_TemperatureSweepData_class(DATA):
 
     T = me.T([2, 5])
     Ms = me.Ms([6781.89022085, 6810.43736377])
-    Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
-    E = me.Entity("Energy", [0, 0])
     U_binder = np.array([0.50682319, 0.50969701])
+    Cv = me.Entity("IsochoricHeatCapacity", [0, 0], "eV / K")
+    E = me.Entity("HelmholtzEnergy", [0, 0], "eV")
+    chi = me.Entity("MagneticSusceptibility", [0.435522062, 0.172481279])
     assert T == sweep_data.T
     assert Ms == sweep_data.Ms
     assert Cv == sweep_data.Cv
     assert E == sweep_data.E
     assert np.allclose(U_binder, sweep_data.U_binder)
+    assert chi == sweep_data.chi
 
 
 def test_TemperatureSweepData_output(DATA, tmp_path):
     sweep_data = uppasd.read(DATA / "uppasd" / "0-temperature_sweep")
     sweep_data.save_output(tmp_path)
-    collection = me.from_csv(tmp_path / "output.csv")
+    collection = me.from_csv(tmp_path / "thermal.csv")
     T = me.T([2, 5])
     Ms = me.Ms([6781.89022085, 6810.43736377])
-    Cv = me.Entity("IsochoricHeatCapacity", [0, 0])
     U_binder = np.array([0.50682319, 0.50969701])
-    E = me.Entity("Energy", [0, 0])
+    Js = me.Entity(
+        "SpontaneousMagneticPolarization",
+        Ms.q.to("T", equivalencies=u.magnetic_flux_field()),
+    )
+    Cv = me.Entity("IsochoricHeatCapacity", [0, 0], "eV / K")
+    E = me.Entity("HelmholtzEnergy", [0, 0], "eV")
+    chi = me.Entity("MagneticSusceptibility", [0.435522062, 0.172481279])
     assert collection.T == T
     assert collection.Ms == Ms
+    assert collection.Js == Js
     assert collection.Cv == Cv
-    assert np.allclose(collection.U_binder, U_binder)
+    assert np.allclose(collection.U_L, U_binder)
     assert collection.E == E
+    assert collection.chi == chi
 
 
 def test_TemperatureSweepData_yaml(DATA):
