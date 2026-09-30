@@ -380,14 +380,14 @@ class RunData:
         return me.Entity("Energy", E, unit="J")
 
     @property
-    def U_binder(self) -> float:
-        """Get U_binder coefficient.
+    def U_L(self) -> float:
+        """Get Binder coefficient.
 
         Returns:
             Binder coefficient.
         """
         U_b = float(self._cumulant_data["U_{Binder}"])
-        return U_b
+        return me.Entity("BinderCumulant", U_b)
 
 
 class TemperatureSweepData:
@@ -540,13 +540,13 @@ class TemperatureSweepData:
         return me.Entity("IsochoricHeatCapacity", Cv)
 
     @property
-    def U_binder(self) -> numpy.ndarray:
-        """Get array of Binder coefficients.
+    def U_L(self) -> numpy.ndarray:
+        """Get Binder coefficients of the sweep.
 
         Returns:
-            Array of Binder coefficients.
+            1D array Entity BinderCumulant.
         """
-        return np.array([run.U_binder for run in self if run])
+        return me.operations.concat_flat(*[run.U_L for run in self if run])
 
     @property
     def E(self) -> mammos_entity.Entity:
@@ -586,7 +586,7 @@ class TemperatureSweepData:
             description="Magnetization and heat capacity from UppASD",
             T=self.T,
             Ms=self.Ms,
-            U_binder=self.U_binder,
+            U_L=self.U_L,
             Cv=self.Cv,
             E=self.E,
         ).to_csv(out / "output.csv")
