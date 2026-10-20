@@ -3,11 +3,13 @@
 import pathlib
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from mammos_spindynamics.db import get_spontaneous_magnetization
 
-DATA_DIR = pathlib.Path(__file__).parent.resolve() / "data"
+ROOT_DIR = pathlib.Path(__file__).parent.parent.resolve()
+DB_DIR = ROOT_DIR / "src" / "mammos_spindynamics" / "data"
 
 
 def test_Co2Fe2H4():
@@ -17,8 +19,11 @@ def test_Co2Fe2H4():
     test should load its table without issues.
     """
     magnetization_data = get_spontaneous_magnetization(chemical_formula="Co2Fe2H4")
-    assert np.allclose(magnetization_data.T.value, magnetization_data.dataframe["T"])
-    assert np.allclose(magnetization_data.Ms.value, magnetization_data.dataframe["Ms"])
+    stored_data = pd.read_csv(DB_DIR / "Co2Fe2H4" / "M.csv")
+    T_data = magnetization_data.T.value
+    Ms_data = magnetization_data.Ms.q.to("A/m").value
+    assert np.allclose(T_data, stored_data["T[K]"].to_numpy())
+    assert np.allclose(Ms_data, stored_data["M[A/m]"].to_numpy())
 
 
 def test_NdFe14B():
