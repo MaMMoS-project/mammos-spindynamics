@@ -31,13 +31,6 @@
   "upload_type": "software",
   "license": "mit",
   "language": "eng",
-  "keywords": [
-    "spin dynamics",
-    "atomistic spin dynamics",
-    "magnetic materials",
-    "temperature-dependent properties",
-    "MaMMoS"
-  ],
   "grants": [
     {
       "id": "10.13039/501100000780::101135546"
