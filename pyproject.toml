@@ -9,9 +9,10 @@ description = "Spin dynamics package."
 readme = "README.md"
 authors = [
   { name = "Andrea Petrocchi" },
-  { name = "Swapneel Amit Pathak" },
   { name = "Martin Lang" },
-  { name = "Sam Holt" },
+  { name = "Swapneel Amit Pathak" },
+  { name = "Samuel Holt" },
+  { name = "Michael Adams" },
   { name = "Hans Fangohr" },
 ]
 license = "MIT"
