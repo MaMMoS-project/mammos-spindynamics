@@ -62,7 +62,7 @@ doi: [10.5281/zenodo.15754978](https://doi.org/10.5281/zenodo.15754978).
 
 ```bibtex
 @software{mammos_spindynamics_zenodo,
-  author={Petrocchi, Andrea and Pathak, Swapneel Amit and Lang, Martin and Holt, Samuel and Fangohr, Hans},
+  author={Petrocchi, Andrea and Lang, Martin and Pathak, Swapneel Amit and Holt, Samuel and Adams, Michael and Fangohr, Hans},
   title={mammos-spindynamics},
   year={2025},
   publisher={Zenodo},
